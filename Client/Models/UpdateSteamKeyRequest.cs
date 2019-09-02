@@ -2,7 +2,7 @@ namespace SteamKeyActivator.Client.Models
 {
     public sealed class UpdateProductKeyRequest : Request
     {
-        public string StoreName => "Steam";
+        public string StoreName { get; set; }
 
         public string ProductName { get; set; }
 

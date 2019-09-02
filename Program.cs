@@ -3,6 +3,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using NuciSecurity.HMAC;
+
+using SteamKeyActivator.Client;
+using SteamKeyActivator.Client.Models;
+using SteamKeyActivator.Client.Security;
 using SteamKeyActivator.Configuration;
 
 namespace SteamKeyActivator
@@ -42,6 +47,10 @@ namespace SteamKeyActivator
             return new ServiceCollection()
                 .AddSingleton(debugSettings)
                 .AddSingleton(productKeyManagerSettings)
+                .AddSingleton<IHmacEncoder<GetProductKeyRequest>, GetProductKeyRequestEncoder>()
+                .AddSingleton<IHmacEncoder<UpdateProductKeyRequest>, UpdateProductKeyRequestEncoder>()
+                .AddSingleton<IHmacEncoder<ProductKeyResponse>, ProductKeyResponseEncoder>()
+                .AddSingleton<IProductKeyManagerClient, ProductKeyManagerClient>()
                 .BuildServiceProvider();
         }
     }
