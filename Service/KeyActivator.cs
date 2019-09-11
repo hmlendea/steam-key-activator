@@ -46,7 +46,7 @@ namespace SteamKeyActivator.Service
         public void ActivateRandomPkmKey()
         {
             string key = keyHandler.GetRandomKey();
-            
+
             LogInIfNeeded();
             ActivateKey(key);
         }
@@ -66,6 +66,8 @@ namespace SteamKeyActivator.Service
             {
                 LogIn();
             }
+
+            LogInIfNeeded();
         }
 
         void LogIn()
@@ -110,8 +112,6 @@ namespace SteamKeyActivator.Service
 
                 throw ex;
             }
-
-            SaveCookies();
 
             logger.Debug(
                 MyOperation.SteamLogIn,
@@ -191,7 +191,7 @@ namespace SteamKeyActivator.Service
                 logger.Debug(
                     MyOperation.KeyActivation,
                     OperationStatus.Failure,
-                    "Product already own by this account",
+                    "Product already owned by this account",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
                     
                 keyHandler.MarkKeyAsAlreadyOwned(key);
