@@ -113,11 +113,14 @@ namespace SteamKeyActivator
         {
             ChromeOptions options = new ChromeOptions();
             options.PageLoadStrategy = PageLoadStrategy.None;
+            options.AddExcludedArgument("--enable-loggin");
             options.AddArgument("--silent");
             options.AddArgument("--no-sandbox");
 			options.AddArgument("--disable-translate");
 			options.AddArgument("--disable-infobars");
-            options.AddArgument("--user-data-dir=" + cacheSettings.CacheDirectoryPath);
+			options.AddArgument("--disable-logging");
+            options.AddArgument("--user-data-dir=" + cacheSettings.CacheDirectoryPath + "/chrome-session");
+            options.AddArgument("--profile-directory=Default");
 
             if (debugSettings.IsHeadless)
             {
