@@ -157,37 +157,37 @@ namespace SteamKeyActivator.Service
             if (errorMessage.Contains("is not valid") ||
                 errorMessage.Contains("nu este valid"))
             {
-                keyHandler.MarkKeyAsInvalid(key);
-
                 logger.Debug(
                     MyOperation.KeyActivation,
                     OperationStatus.Failure,
                     "Invalid product key",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
+
+                keyHandler.MarkKeyAsInvalid(key);
             }
 
             if (errorMessage.Contains("activated by a different Steam account") ||
                 errorMessage.Contains("activat de un cont Steam diferit"))
             {
-                keyHandler.MarkKeyAsUsedBySomeoneElse(key);
-
                 logger.Debug(
                     MyOperation.KeyActivation,
                     OperationStatus.Failure,
                     "Key already activated by a different account",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
+
+                keyHandler.MarkKeyAsUsedBySomeoneElse(key);
             }
 
             if (errorMessage.Contains("This Steam account already owns the product") ||
                 errorMessage.Contains("Contul acesta Steam deține deja produsul"))
             {
-                keyHandler.MarkKeyAsAlreadyOwned(key);
-
                 logger.Debug(
                     MyOperation.KeyActivation,
                     OperationStatus.Failure,
                     "Product already own by this account",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
+                    
+                keyHandler.MarkKeyAsAlreadyOwned(key);
             }
 
             if (errorMessage.Contains("too many recent activation attempts") ||
