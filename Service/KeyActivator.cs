@@ -17,6 +17,7 @@ namespace SteamKeyActivator.Service
     {
         static string HomePageUrl => "https://store.steampowered.com";
         public string LoginUrl => $"{HomePageUrl}/login/?redir=&redir_ssl=1";
+        public string KeyActivationUrl => $"{HomePageUrl}/account/registerkey";
 
         readonly IWebProcessor webProcessor;
         readonly IWebDriver webDriver;
@@ -101,6 +102,53 @@ namespace SteamKeyActivator.Service
             logger.Debug(
                 MyOperation.SteamLogIn,
                 OperationStatus.Success);
+        }
+
+        void ActivateKey(string key)
+        {
+            webProcessor.GoToUrl(KeyActivationUrl);
+
+            By keyInputSelector = By.Id("product_key");
+            By keyActivationButtonSelector = By.Id("register_btn");
+            By agreementCheckboxSelector = By.Id("accept_ssa");
+
+            By errorSelector = By.Id("error_display");
+
+            webProcessor.SetText(keyInputSelector, key);
+            webProcessor.UpdateCheckbox(agreementCheckboxSelector, true);
+
+            webProcessor.Click(keyActivationButtonSelector);
+
+            webProcessor.WaitForElementToBeVisible(errorSelector);
+            string message = webProcessor.GetText(errorSelector);
+
+            Console.WriteLine(message);
+        }
+
+        void HandleActivationError(string errorMessage)
+        {
+            if (errorMessage.Contains("is not valid") ||
+                errorMessage.Contains("nu este valid"))
+            {
+                throw new KeyActivationException("Invalid product key");
+            }
+
+            if (errorMessage.Contains("activated by a different Steam account"))
+            {
+                throw new KeyActivationException("Key already activated by a different account");
+            }
+
+            if (errorMessage.Contains("This Steam account already owns the product") ||
+                errorMessage.Contains("Contul acesta Steam deține deja produsul"))
+            {
+                throw new KeyActivationException("Product already own by this account");
+            }
+
+            if (errorMessage.Contains("too many recent activation attempts") ||
+                errorMessage.Contains("prea multe încercări de activare recente"))
+            {
+                throw new KeyActivationException("Key activation limit reached");
+            }
         }
 
         void SaveCookies()
