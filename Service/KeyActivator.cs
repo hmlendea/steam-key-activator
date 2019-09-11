@@ -229,8 +229,6 @@ namespace SteamKeyActivator.Service
         {
             logger.Info(MyOperation.CookieSaving, OperationStatus.Started);
 
-            webProcessor.GoToUrl(HomePageUrl);
-            
             string cookiesFilePath = Path.Combine(cacheSettings.CacheDirectoryPath, "cookies.txt"); 
             string cookiesFileContent = string.Empty;       
             ReadOnlyCollection<Cookie> cookies = webDriver.Manage().Cookies.AllCookies;
@@ -287,8 +285,6 @@ namespace SteamKeyActivator.Service
 
                 webDriver.Manage().Cookies.AddCookie(cookie);
             }
-
-            webProcessor.GoToUrl("about:blank");
 
             logger.Debug(MyOperation.CookieLoading, OperationStatus.Success);
         }
