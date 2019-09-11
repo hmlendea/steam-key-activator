@@ -21,7 +21,7 @@ namespace SteamKeyActivator.Service
 
         readonly IWebProcessor webProcessor;
         readonly IWebDriver webDriver;
-        readonly IKeyUpdater keyUpdater;
+        readonly IKeyHandler keyHandler;
         readonly BotSettings botSettings;
         readonly CacheSettings cacheSettings;
         readonly ILogger logger;
@@ -29,14 +29,14 @@ namespace SteamKeyActivator.Service
         public KeyActivator(
             IWebProcessor webProcessor,
             IWebDriver webDriver,
-            IKeyUpdater keyUpdater,
+            IKeyHandler keyHandler,
             BotSettings botSettings,
             CacheSettings cacheSettings,
             ILogger logger)
         {
             this.webProcessor = webProcessor;
             this.webDriver = webDriver;
-            this.keyUpdater = keyUpdater;
+            this.keyHandler = keyHandler;
             this.botSettings = botSettings;
             this.cacheSettings = cacheSettings;
             this.logger = logger;
@@ -44,6 +44,9 @@ namespace SteamKeyActivator.Service
 
         public void ActivateRandomPkmKey()
         {
+            string key = keyHandler.GetRandomKey();
+            Console.WriteLine(key);
+
             LoadCookies();
 
             bool isLogInRequired = CheckIfLogInIsRequired();
@@ -52,6 +55,8 @@ namespace SteamKeyActivator.Service
             {
                 LogIn();
             }
+
+            ActivateKey(key);
         }
 
         bool CheckIfLogInIsRequired()
@@ -116,16 +121,29 @@ namespace SteamKeyActivator.Service
             By agreementCheckboxSelector = By.Id("accept_ssa");
 
             By errorSelector = By.Id("error_display");
+            By receiptSelector = By.Id("receipt_form");
+
+            By productNameSelector = By.ClassName("registerkey_lineitem");
 
             webProcessor.SetText(keyInputSelector, key);
             webProcessor.UpdateCheckbox(agreementCheckboxSelector, true);
 
             webProcessor.Click(keyActivationButtonSelector);
 
-            webProcessor.WaitForElementToBeVisible(errorSelector);
-            string message = webProcessor.GetText(errorSelector);
+            webProcessor.WaitForAnyElementToBeVisible(errorSelector, receiptSelector);
 
-            Console.WriteLine(message);
+            if (webProcessor.IsElementVisible(errorSelector))
+            {
+                string errorMessage = webProcessor.GetText(errorSelector);
+                HandleActivationError(key, errorMessage);
+            }
+            else
+            {
+                string productName = webProcessor.GetText(productNameSelector);
+                keyHandler.MarkKeyAsActivated(key, productName);
+            }
+
+            webProcessor.Wait(99999999);
         }
 
         void HandleActivationError(string key, string errorMessage)
@@ -133,20 +151,21 @@ namespace SteamKeyActivator.Service
             if (errorMessage.Contains("is not valid") ||
                 errorMessage.Contains("nu este valid"))
             {
-                keyUpdater.MarkKeyAsInvalid(key);
+                keyHandler.MarkKeyAsInvalid(key);
                 throw new KeyActivationException("Invalid product key");
             }
 
-            if (errorMessage.Contains("activated by a different Steam account"))
+            if (errorMessage.Contains("activated by a different Steam account") ||
+                errorMessage.Contains("activat de un cont Steam diferit"))
             {
-                keyUpdater.MarkKeyAsUsedBySomeoneElse(key);
+                keyHandler.MarkKeyAsUsedBySomeoneElse(key);
                 throw new KeyActivationException("Key already activated by a different account");
             }
 
             if (errorMessage.Contains("This Steam account already owns the product") ||
                 errorMessage.Contains("Contul acesta Steam deține deja produsul"))
             {
-                keyUpdater.MarkKeyAsAlreadyOwned(key);
+                keyHandler.MarkKeyAsAlreadyOwned(key);
                 throw new KeyActivationException("Product already own by this account");
             }
 

@@ -3,7 +3,7 @@ using SteamKeyActivator.Configuration;
 
 namespace SteamKeyActivator.Service
 {
-    public sealed class KeyUpdater : IKeyUpdater
+    public sealed class KeyUpdater : IKeyHandler
     {
         readonly IProductKeyManagerClient productKeyManagerClient;
         readonly BotSettings botSettings;
@@ -14,6 +14,11 @@ namespace SteamKeyActivator.Service
         {
             this.productKeyManagerClient = productKeyManagerClient;
             this.botSettings = botSettings;
+        }
+
+        public string GetRandomKey()
+        {
+            return productKeyManagerClient.GetProductKey("Unknown").Result;
         }
 
         public void MarkKeyAsInvalid(string key)
@@ -31,9 +36,9 @@ namespace SteamKeyActivator.Service
             this.productKeyManagerClient.UpdateProductKey(key, "Unknown", "AlreadyOwned", botSettings.SteamUsername);
         }
 
-        public void MarkKeyAsActivated(string key)
+        public void MarkKeyAsActivated(string key, string productName)
         {
-            this.productKeyManagerClient.UpdateProductKey(key, "Unknown", "AlreadyOwned", botSettings.SteamUsername);
+            this.productKeyManagerClient.UpdateProductKey(key, productName, "AlreadyOwned", botSettings.SteamUsername);
         }
     }
 }

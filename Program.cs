@@ -58,18 +58,23 @@ namespace SteamKeyActivator
             {
                 logger.Fatal(Operation.Unknown, OperationStatus.Failure, ex);
             }
+            finally
+            {
+                if (!(webDriver is null))
+                {
+                    webDriver.Quit();
+                }
 
-            logger.Info(Operation.ShutDown, "Application stopped");
+                logger.Info(Operation.ShutDown, "Application stopped");
+            }
         }
 
         static void RunApplication()
         {
-
             IKeyActivator keyActivator = serviceProvider.GetService<IKeyActivator>();
             keyActivator.ActivateRandomPkmKey();
 
             webDriver.Quit();
-            Console.WriteLine("Hello World!");
         }
         
         static IConfiguration LoadConfiguration()
@@ -105,6 +110,7 @@ namespace SteamKeyActivator
                 .AddSingleton<IProductKeyManagerClient, ProductKeyManagerClient>()
                 .AddSingleton<IWebDriver>(s => webDriver)
                 .AddSingleton<IWebProcessor, WebProcessor>()
+                .AddSingleton<IKeyHandler, KeyUpdater>()
                 .AddSingleton<IKeyActivator, KeyActivator>()
                 .BuildServiceProvider();
         }

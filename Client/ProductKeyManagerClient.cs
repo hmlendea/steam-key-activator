@@ -32,13 +32,14 @@ namespace SteamKeyActivator.Client
             this.getRequestEncoder = getRequestEncoder;
             this.updateRequestEncoder = updateRequestEncoder;
             this.getResponseEncoder = getResponseEncoder;
-
             this.settings = settings;
+
+            httpClient = new HttpClient();
         }
 
-        public async Task<string> GetProductKey()
+        public async Task<string> GetProductKey(string status)
         {
-            string endpoint = BuildGetRequestUrl();
+            string endpoint = BuildGetRequestUrl(status);
 
             HttpResponseMessage httpResponse = await httpClient.GetAsync(endpoint);
 
@@ -84,11 +85,11 @@ namespace SteamKeyActivator.Client
             return response;
         }
 
-        string BuildGetRequestUrl()
+        string BuildGetRequestUrl(string status)
         {
             GetProductKeyRequest request = new GetProductKeyRequest();
             request.StoreName = "Steam";
-            request.Status = "Unknown";
+            request.Status = status;
             request.HmacToken = getRequestEncoder.GenerateToken(request, settings.SharedSecretKey);
 
             string endpoint =

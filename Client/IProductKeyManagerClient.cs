@@ -4,7 +4,7 @@ namespace SteamKeyActivator.Client
 {
     public interface IProductKeyManagerClient
     {
-        Task<string> GetProductKey();
+        Task<string> GetProductKey(string status);
 
         Task UpdateProductKey(string key, string productName, string status);
 
