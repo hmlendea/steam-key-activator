@@ -90,7 +90,11 @@ namespace SteamKeyActivator.Service
 
             webProcessor.SetText(usernameInputSelector, botSettings.SteamUsername);
             webProcessor.SetText(passwordInputSelector, botSettings.SteamPassword);
-            webProcessor.UpdateCheckbox(rememberLoginChecboxSelector, true);
+
+            if (webProcessor.IsElementVisible(rememberLoginChecboxSelector))
+            {
+                webProcessor.UpdateCheckbox(rememberLoginChecboxSelector, true);
+            }
             
             webProcessor.Click(By.XPath(@"//*[@id='login_btn_signin']/button"));
             webProcessor.WaitForAnyElementToBeVisible(steamGuardCodeInputSelector, avatarSelector);
@@ -205,10 +209,10 @@ namespace SteamKeyActivator.Service
                 logger.Debug(
                     MyOperation.KeyActivation,
                     OperationStatus.Failure,
-                    "Product requires another in order to activate",
+                    "A base product is required in order to activate this key",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
                     
-                keyHandler.MarkKeyAsAlreadyOwned(key);
+                keyHandler.MarkKeyAsRequiresBaseProduct(key);
             }
 
             if (errorMessage.Contains("too many recent activation attempts") ||
