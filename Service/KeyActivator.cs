@@ -55,7 +55,7 @@ namespace SteamKeyActivator.Service
         {
             LoadCookies();
 
-            webProcessor.GoToUrl(HomePageUrl);
+            webProcessor.GoToUrl(KeyActivationUrl);
 
             By logoSelector = By.Id("logo_holder");
             By avatarSelector = By.XPath("//a[contains(@class,'user_avatar')]");
@@ -124,8 +124,6 @@ namespace SteamKeyActivator.Service
                 OperationStatus.Started,
                 new LogInfo(MyLogInfoKey.KeyCode, key));
 
-            webProcessor.GoToUrl(KeyActivationUrl);
-
             By keyInputSelector = By.Id("product_key");
             By keyActivationButtonSelector = By.Id("register_btn");
             By agreementCheckboxSelector = By.Id("accept_ssa");
@@ -134,6 +132,11 @@ namespace SteamKeyActivator.Service
             By receiptSelector = By.Id("receipt_form");
 
             By productNameSelector = By.ClassName("registerkey_lineitem");
+
+            if (!webProcessor.IsElementVisible(keyInputSelector))
+            {
+                webProcessor.GoToUrl(KeyActivationUrl);
+            }
 
             webProcessor.SetText(keyInputSelector, key);
             webProcessor.UpdateCheckbox(agreementCheckboxSelector, true);
