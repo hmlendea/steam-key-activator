@@ -119,8 +119,6 @@ namespace SteamKeyActivator
 			options.AddArgument("--disable-translate");
 			options.AddArgument("--disable-infobars");
 			options.AddArgument("--disable-logging");
-            options.AddArgument("--user-data-dir=" + cacheSettings.CacheDirectoryPath + "/chrome-session");
-            options.AddArgument("--profile-directory=Default");
 
             if (debugSettings.IsHeadless)
             {
