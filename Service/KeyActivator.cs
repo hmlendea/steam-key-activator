@@ -65,9 +65,8 @@ namespace SteamKeyActivator.Service
             if (!webProcessor.IsElementVisible(avatarSelector))
             {
                 LogIn();
+                SaveCookies();
             }
-
-            LogInIfNeeded();
         }
 
         void LogIn()
