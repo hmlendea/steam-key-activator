@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Authentication;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,6 +48,7 @@ namespace SteamKeyActivator
             {
                 RunApplication();
             }
+            catch (AuthenticationException) { }
             catch (AggregateException ex)
             {
                 foreach (Exception innerException in ex.InnerExceptions)

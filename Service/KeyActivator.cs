@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Security.Authentication;
 
 using NuciLog.Core;
 using NuciWeb;
@@ -78,12 +79,17 @@ namespace SteamKeyActivator.Service
 
             By usernameInputSelector = By.Id("input_username");
             By passwordInputSelector = By.Id("input_password");
+            By rememberLoginChecboxSelector = By.Id("remember_login");
+            
             By steamGuardCodeInputSelector = By.Id("twofactorcode_entry");
             By steamGuardSubmitButtonSelector = By.XPath("//*[@id='login_twofactorauth_buttonset_entercode']/div[1]");
+            By steamGuardIncorrectMessageSelector = By.Id("login_twofactorauth_message_incorrectcode");
+
             By avatarSelector = By.XPath("//a[contains(@class,'user_avatar')]");
 
             webProcessor.SetText(usernameInputSelector, botSettings.SteamUsername);
             webProcessor.SetText(passwordInputSelector, botSettings.SteamPassword);
+            webProcessor.UpdateCheckbox(rememberLoginChecboxSelector, true);
             
             webProcessor.Click(By.XPath(@"//*[@id='login_btn_signin']/button"));
             webProcessor.WaitForAnyElementToBeVisible(steamGuardCodeInputSelector, avatarSelector);
@@ -94,7 +100,16 @@ namespace SteamKeyActivator.Service
                 webProcessor.Click(steamGuardSubmitButtonSelector);
             }
 
-            webProcessor.WaitForElementToBeVisible(avatarSelector);
+            webProcessor.WaitForAnyElementToBeVisible(avatarSelector, steamGuardIncorrectMessageSelector);
+
+            if (webProcessor.IsElementVisible(steamGuardIncorrectMessageSelector))
+            {
+                Exception ex = new AuthenticationException("The provided SteamGuard code");
+
+                logger.Error(MyOperation.SteamLogIn, OperationStatus.Failure, ex);
+
+                throw ex;
+            }
 
             SaveCookies();
 
