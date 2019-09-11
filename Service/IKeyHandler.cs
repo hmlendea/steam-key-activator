@@ -10,6 +10,8 @@ namespace SteamKeyActivator.Service
 
         void MarkKeyAsAlreadyOwned(string key);
 
+        void MarkKeyAsRequiresBaseProduct(string key);
+
         void MarkKeyAsActivated(string key, string productName);
     }
 }

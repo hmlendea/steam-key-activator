@@ -199,6 +199,18 @@ namespace SteamKeyActivator.Service
                 keyHandler.MarkKeyAsAlreadyOwned(key);
             }
 
+            if (errorMessage.Contains("requires ownership of another product") ||
+                errorMessage.Contains("necesită deținerea unui alt produs"))
+            {
+                logger.Debug(
+                    MyOperation.KeyActivation,
+                    OperationStatus.Failure,
+                    "Product requires another in order to activate",
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
+                    
+                keyHandler.MarkKeyAsAlreadyOwned(key);
+            }
+
             if (errorMessage.Contains("too many recent activation attempts") ||
                 errorMessage.Contains("prea multe încercări de activare recente"))
             {
