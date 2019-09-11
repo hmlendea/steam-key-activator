@@ -10,6 +10,10 @@ namespace SteamKeyActivator.Logging
             
         }
 
+        public static Operation CookieSaving => new MyOperation(nameof(CookieSaving));
+
+        public static Operation CookieLoading => new MyOperation(nameof(CookieLoading));
+
         public static Operation SteamLogIn => new MyOperation(nameof(SteamLogIn));
 
         public static Operation KeyRetrieval => new MyOperation(nameof(KeyRetrieval));

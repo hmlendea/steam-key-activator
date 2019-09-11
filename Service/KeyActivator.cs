@@ -45,21 +45,15 @@ namespace SteamKeyActivator.Service
         public void ActivateRandomPkmKey()
         {
             string key = keyHandler.GetRandomKey();
-
-            LoadCookies();
-
-            bool isLogInRequired = CheckIfLogInIsRequired();
             
-            if (isLogInRequired)
-            {
-                LogIn();
-            }
-
+            LogInIfNeeded();
             ActivateKey(key);
         }
 
-        bool CheckIfLogInIsRequired()
+        void LogInIfNeeded()
         {
+            LoadCookies();
+
             webProcessor.GoToUrl(HomePageUrl);
 
             By logoSelector = By.Id("logo_holder");
@@ -67,12 +61,10 @@ namespace SteamKeyActivator.Service
 
             webProcessor.WaitForElementToBeVisible(logoSelector);
 
-            if (webProcessor.IsElementVisible(avatarSelector))
+            if (!webProcessor.IsElementVisible(avatarSelector))
             {
-                return false;
+                LogIn();
             }
-
-            return true;
         }
 
         void LogIn()
@@ -203,6 +195,8 @@ namespace SteamKeyActivator.Service
 
         void SaveCookies()
         {
+            logger.Info(MyOperation.CookieSaving, OperationStatus.Started);
+
             webProcessor.GoToUrl(HomePageUrl);
             
             string cookiesFilePath = Path.Combine(cacheSettings.CacheDirectoryPath, "cookies.txt"); 
@@ -221,10 +215,14 @@ namespace SteamKeyActivator.Service
             }
 
             File.WriteAllText(cookiesFilePath, cookiesFileContent);
+
+            logger.Debug(MyOperation.CookieSaving, OperationStatus.Success);
         }
 
         void LoadCookies()
         {
+            logger.Info(MyOperation.CookieLoading, OperationStatus.Started);
+
             string cookiesFilePath = Path.Combine(cacheSettings.CacheDirectoryPath, "cookies.txt");
 
             if (!File.Exists(cookiesFilePath))
@@ -259,6 +257,8 @@ namespace SteamKeyActivator.Service
             }
 
             webProcessor.GoToUrl("about:blank");
+
+            logger.Debug(MyOperation.CookieLoading, OperationStatus.Success);
         }
     }
 }
