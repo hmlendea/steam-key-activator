@@ -47,14 +47,14 @@ namespace SteamKeyActivator.Service
         {
             string key = keyHandler.GetRandomKey();
 
+            LoadCookies();
             LogInIfNeeded();
             ActivateKey(key);
+            SaveCookies();
         }
 
         void LogInIfNeeded()
         {
-            LoadCookies();
-
             webProcessor.GoToUrl(KeyActivationUrl);
 
             By logoSelector = By.Id("logo_holder");
@@ -65,7 +65,6 @@ namespace SteamKeyActivator.Service
             if (!webProcessor.IsElementVisible(avatarSelector))
             {
                 LogIn();
-                SaveCookies();
             }
         }
 
