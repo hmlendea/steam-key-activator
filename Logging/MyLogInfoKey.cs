@@ -11,5 +11,9 @@ namespace SteamKeyActivator.Logging
         }
 
         public static LogInfoKey Username => new MyLogInfoKey(nameof(Username));
+
+        public static LogInfoKey KeyCode => new MyLogInfoKey(nameof(KeyCode));
+
+        public static LogInfoKey KeyStatus => new MyLogInfoKey(nameof(KeyStatus));
     }
 }

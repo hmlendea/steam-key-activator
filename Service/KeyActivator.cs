@@ -45,7 +45,6 @@ namespace SteamKeyActivator.Service
         public void ActivateRandomPkmKey()
         {
             string key = keyHandler.GetRandomKey();
-            Console.WriteLine(key);
 
             LoadCookies();
 
@@ -114,6 +113,11 @@ namespace SteamKeyActivator.Service
 
         void ActivateKey(string key)
         {
+            logger.Info(
+                MyOperation.KeyActivation,
+                OperationStatus.Started,
+                new LogInfo(MyLogInfoKey.KeyCode, key));
+
             webProcessor.GoToUrl(KeyActivationUrl);
 
             By keyInputSelector = By.Id("product_key");
@@ -136,14 +140,16 @@ namespace SteamKeyActivator.Service
             {
                 string errorMessage = webProcessor.GetText(errorSelector);
                 HandleActivationError(key, errorMessage);
+                return;
             }
-            else
-            {
-                string productName = webProcessor.GetText(productNameSelector);
-                keyHandler.MarkKeyAsActivated(key, productName);
-            }
+            
+            string productName = webProcessor.GetText(productNameSelector);
+            keyHandler.MarkKeyAsActivated(key, productName);
 
-            webProcessor.Wait(99999999);
+            logger.Debug(
+                MyOperation.KeyActivation,
+                OperationStatus.Success,
+                new LogInfo(MyLogInfoKey.KeyCode, key));
         }
 
         void HandleActivationError(string key, string errorMessage)
@@ -152,27 +158,46 @@ namespace SteamKeyActivator.Service
                 errorMessage.Contains("nu este valid"))
             {
                 keyHandler.MarkKeyAsInvalid(key);
-                throw new KeyActivationException("Invalid product key");
+
+                logger.Debug(
+                    MyOperation.KeyActivation,
+                    OperationStatus.Failure,
+                    "Invalid product key",
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
             }
 
             if (errorMessage.Contains("activated by a different Steam account") ||
                 errorMessage.Contains("activat de un cont Steam diferit"))
             {
                 keyHandler.MarkKeyAsUsedBySomeoneElse(key);
-                throw new KeyActivationException("Key already activated by a different account");
+
+                logger.Debug(
+                    MyOperation.KeyActivation,
+                    OperationStatus.Failure,
+                    "Key already activated by a different account",
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
             }
 
             if (errorMessage.Contains("This Steam account already owns the product") ||
                 errorMessage.Contains("Contul acesta Steam deține deja produsul"))
             {
                 keyHandler.MarkKeyAsAlreadyOwned(key);
-                throw new KeyActivationException("Product already own by this account");
+
+                logger.Debug(
+                    MyOperation.KeyActivation,
+                    OperationStatus.Failure,
+                    "Product already own by this account",
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
             }
 
             if (errorMessage.Contains("too many recent activation attempts") ||
                 errorMessage.Contains("prea multe încercări de activare recente"))
             {
-                throw new KeyActivationException("Key activation limit reached");
+                logger.Debug(
+                    MyOperation.KeyActivation,
+                    OperationStatus.Failure,
+                    "Key activation limit reached",
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
             }
         }
 
@@ -193,7 +218,6 @@ namespace SteamKeyActivator.Service
                     cookie.Path + "Î" +
                     cookie.Expiry.ToString() +
                     Environment.NewLine;
-
             }
 
             File.WriteAllText(cookiesFilePath, cookiesFileContent);

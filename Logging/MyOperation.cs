@@ -11,5 +11,11 @@ namespace SteamKeyActivator.Logging
         }
 
         public static Operation SteamLogIn => new MyOperation(nameof(SteamLogIn));
+
+        public static Operation KeyRetrieval => new MyOperation(nameof(KeyRetrieval));
+
+        public static Operation KeyActivation => new MyOperation(nameof(KeyActivation));
+
+        public static Operation KeyUpdate => new MyOperation(nameof(KeyUpdate));
     }
 }
