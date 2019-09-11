@@ -53,8 +53,11 @@ namespace SteamKeyActivator.Client
         }
 
         public async Task UpdateProductKey(string key, string productName, string status)
+            => await UpdateProductKey(key, productName, status, null);
+
+        public async Task UpdateProductKey(string key, string productName, string status, string owner)
         {
-            string endpoint = BuildUpdateRequestUrl(key, productName, status);
+            string endpoint = BuildUpdateRequestUrl(key, productName, status, owner);
 
             HttpResponseMessage httpResponse = await httpClient.PutAsync(endpoint, null);
 
@@ -97,12 +100,13 @@ namespace SteamKeyActivator.Client
             return endpoint;
         }
 
-        string BuildUpdateRequestUrl(string key, string productName, string status)
+        string BuildUpdateRequestUrl(string key, string productName, string status, string owner)
         {
             UpdateProductKeyRequest request = new UpdateProductKeyRequest();
             request.StoreName = "Steam";
             request.ProductName = productName;
             request.Key = key;
+            request.Owner = owner;
             request.Status = status;
             request.HmacToken = updateRequestEncoder.GenerateToken(request, settings.SharedSecretKey);
 
@@ -110,7 +114,14 @@ namespace SteamKeyActivator.Client
                 $"{settings.ApiUrl}" +
                 $"?store={request.StoreName}" +
                 $"&product={request.StoreName}" +
-                $"&key={request.Key}" +
+                $"&key={request.Key}";
+            
+            if (!(request.Owner is null))
+            {
+                endpoint += $"&owner={request.Owner}";
+            }
+
+            endpoint +=
                 $"&status={request.Status}" +
                 $"&hmac={request.HmacToken}";
 

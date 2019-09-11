@@ -21,6 +21,7 @@ namespace SteamKeyActivator.Service
 
         readonly IWebProcessor webProcessor;
         readonly IWebDriver webDriver;
+        readonly IKeyUpdater keyUpdater;
         readonly BotSettings botSettings;
         readonly CacheSettings cacheSettings;
         readonly ILogger logger;
@@ -28,12 +29,14 @@ namespace SteamKeyActivator.Service
         public KeyActivator(
             IWebProcessor webProcessor,
             IWebDriver webDriver,
+            IKeyUpdater keyUpdater,
             BotSettings botSettings,
             CacheSettings cacheSettings,
             ILogger logger)
         {
             this.webProcessor = webProcessor;
             this.webDriver = webDriver;
+            this.keyUpdater = keyUpdater;
             this.botSettings = botSettings;
             this.cacheSettings = cacheSettings;
             this.logger = logger;
@@ -125,22 +128,25 @@ namespace SteamKeyActivator.Service
             Console.WriteLine(message);
         }
 
-        void HandleActivationError(string errorMessage)
+        void HandleActivationError(string key, string errorMessage)
         {
             if (errorMessage.Contains("is not valid") ||
                 errorMessage.Contains("nu este valid"))
             {
+                keyUpdater.MarkKeyAsInvalid(key);
                 throw new KeyActivationException("Invalid product key");
             }
 
             if (errorMessage.Contains("activated by a different Steam account"))
             {
+                keyUpdater.MarkKeyAsUsedBySomeoneElse(key);
                 throw new KeyActivationException("Key already activated by a different account");
             }
 
             if (errorMessage.Contains("This Steam account already owns the product") ||
                 errorMessage.Contains("Contul acesta Steam deține deja produsul"))
             {
+                keyUpdater.MarkKeyAsAlreadyOwned(key);
                 throw new KeyActivationException("Product already own by this account");
             }
 
