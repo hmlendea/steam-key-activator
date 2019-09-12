@@ -176,6 +176,7 @@ namespace SteamKeyActivator.Service
                     new LogInfo(MyLogInfoKey.KeyCode, key));
 
                 keyHandler.MarkKeyAsInvalid(key);
+                return;
             }
 
             if (errorMessage.Contains("activated by a different Steam account") ||
@@ -188,6 +189,7 @@ namespace SteamKeyActivator.Service
                     new LogInfo(MyLogInfoKey.KeyCode, key));
 
                 keyHandler.MarkKeyAsUsedBySomeoneElse(key);
+                return;
             }
 
             if (errorMessage.Contains("This Steam account already owns the product") ||
@@ -200,6 +202,7 @@ namespace SteamKeyActivator.Service
                     new LogInfo(MyLogInfoKey.KeyCode, key));
                     
                 keyHandler.MarkKeyAsAlreadyOwned(key);
+                return;
             }
 
             if (errorMessage.Contains("requires ownership of another product") ||
@@ -212,6 +215,7 @@ namespace SteamKeyActivator.Service
                     new LogInfo(MyLogInfoKey.KeyCode, key));
                     
                 keyHandler.MarkKeyAsRequiresBaseProduct(key);
+                return;
             }
 
             if (errorMessage.Contains("too many recent activation attempts") ||
@@ -222,7 +226,10 @@ namespace SteamKeyActivator.Service
                     OperationStatus.Failure,
                     "Key activation limit reached",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
+                return;
             }
+
+            throw new FormatException($"Unrecognised error message: \"{errorMessage}\"");
         }
 
         void SaveCookies()
