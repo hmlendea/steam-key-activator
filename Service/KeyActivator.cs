@@ -1,162 +1,80 @@
 using System;
-
-using NuciLog.Core;
-using NuciWeb;
-
-using OpenQA.Selenium;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 
 using SteamKeyActivator.Configuration;
-using SteamKeyActivator.Logging;
 
 namespace SteamKeyActivator.Service
 {
     public sealed class KeyActivator : IKeyActivator
     {
-        const string KeyActivationUrl = "https://store.steampowered.com/account/registerkey";
+        const string KeyActivationEndpoint = "https://store.steampowered.com/account/ajaxregisterkey";
 
-        readonly IWebProcessor webProcessor;
         readonly ICookieManager cookieManager;
-        readonly ISteamAuthenticator steamAuthenticator;
-        readonly IKeyHandler keyHandler;
-        readonly BotSettings botSettings;
-        readonly ILogger logger;
+        readonly HttpSettings httpSettings;
+
+        readonly HttpClientHandler httpClientHandler;
+        readonly HttpClient httpClient;
 
         public KeyActivator(
-            IWebProcessor webProcessor,
             ICookieManager cookieManager,
-            ISteamAuthenticator steamAuthenticator,
-            IKeyHandler keyHandler,
-            BotSettings botSettings,
-            ILogger logger)
+            HttpSettings httpSettings)
         {
-            this.webProcessor = webProcessor;
             this.cookieManager = cookieManager;
-            this.steamAuthenticator = steamAuthenticator;
-            this.keyHandler = keyHandler;
-            this.botSettings = botSettings;
-            this.logger = logger;
+            this.httpSettings = httpSettings;
+
+            httpClientHandler = new HttpClientHandler();
+
+            CookieCollection cookies = cookieManager.LoadCookies();
+            if (!(cookies is null))
+            {
+                httpClientHandler.CookieContainer = new CookieContainer();
+                httpClientHandler.CookieContainer.Add(cookies);
+            }
+
+            httpClient = new HttpClient(httpClientHandler);
+            httpClient.DefaultRequestHeaders.Add(
+                "User-Agent",
+                httpSettings.UserAgent);
         }
 
         public void ActivateRandomPkmKey()
         {
-            cookieManager.LoadCookies();
-            steamAuthenticator.LogIn();
-            string key = keyHandler.GetRandomKey();
+            Uri uri = new Uri(KeyActivationEndpoint);
+            HttpRequestMessage request = BuildRequest("...");
+            HttpResponseMessage response = httpClient.SendAsync(request).Result; // TODO: Broken async
 
-            ActivateKey(key);
-            cookieManager.SaveCookies();
+            cookieManager.SaveCookies(httpClientHandler.CookieContainer.GetCookies(uri));
         }
 
-        void ActivateKey(string key)
+        HttpRequestMessage BuildRequest(string key)
         {
-            logger.Info(
-                MyOperation.KeyActivation,
-                OperationStatus.Started,
-                new LogInfo(MyLogInfoKey.KeyCode, key));
+            HttpRequestMessage request = new HttpRequestMessage();
+            request.Method = HttpMethod.Get;
+            request.RequestUri = new Uri(KeyActivationEndpoint);
 
-            By keyInputSelector = By.Id("product_key");
-            By keyActivationButtonSelector = By.Id("register_btn");
-            By agreementCheckboxSelector = By.Id("accept_ssa");
+            request.Headers.Add("Sec-Fetch-Mode", "cors");
+            request.Headers.Add("DNT", "1");
+            request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
+            request.Headers.Add("Accept-Language", "en-GB,en;q=0.9,ro;q=0.8");
+            request.Headers.Add("X-Prototype-Version", "1.7");
+            request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            //request.Headers.Add("Cookie", "...");
+            request.Headers.Add("Connection", "keep-alive");
+            //request.Headers.Add("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+            request.Headers.Add("Accept", "text/javascript, text/html, application/xml, text/xml, */*");
+            request.Headers.Add("Referer", "https://store.steampowered.com/account/registerkey");
+            request.Headers.Add("Sec-Fetch-Site", "same-origin");
+            request.Headers.Add("Origin", "https://store.steampowered.com");
 
-            By errorSelector = By.Id("error_display");
-            By receiptSelector = By.Id("receipt_form");
-
-            By productNameSelector = By.ClassName("registerkey_lineitem");
-
-            if (!webProcessor.IsElementVisible(keyInputSelector))
+            request.Content = new FormUrlEncodedContent(new[]
             {
-                webProcessor.GoToUrl(KeyActivationUrl);
-            }
+                new KeyValuePair<string, string>("product_key", key),
+                new KeyValuePair<string, string>("sessionid", "..."),
+            });
 
-            webProcessor.SetText(keyInputSelector, key);
-            webProcessor.UpdateCheckbox(agreementCheckboxSelector, true);
-
-            webProcessor.Click(keyActivationButtonSelector);
-
-            webProcessor.WaitForAnyElementToBeVisible(errorSelector, receiptSelector);
-
-            if (webProcessor.IsElementVisible(errorSelector))
-            {
-                string errorMessage = webProcessor.GetText(errorSelector);
-                HandleActivationError(key, errorMessage);
-                return;
-            }
-            
-            string productName = webProcessor.GetText(productNameSelector);
-            keyHandler.MarkKeyAsActivated(key, productName);
-
-            logger.Debug(
-                MyOperation.KeyActivation,
-                OperationStatus.Success,
-                new LogInfo(MyLogInfoKey.KeyCode, key));
-        }
-
-        void HandleActivationError(string key, string errorMessage)
-        {
-            if (errorMessage.Contains("is not valid") ||
-                errorMessage.Contains("nu este valid"))
-            {
-                logger.Debug(
-                    MyOperation.KeyActivation,
-                    OperationStatus.Failure,
-                    "Invalid product key",
-                    new LogInfo(MyLogInfoKey.KeyCode, key));
-
-                keyHandler.MarkKeyAsInvalid(key);
-                return;
-            }
-
-            if (errorMessage.Contains("activated by a different Steam account") ||
-                errorMessage.Contains("activat de un cont Steam diferit"))
-            {
-                logger.Debug(
-                    MyOperation.KeyActivation,
-                    OperationStatus.Failure,
-                    "Key already activated by a different account",
-                    new LogInfo(MyLogInfoKey.KeyCode, key));
-
-                keyHandler.MarkKeyAsUsedBySomeoneElse(key);
-                return;
-            }
-
-            if (errorMessage.Contains("This Steam account already owns the product") ||
-                errorMessage.Contains("Contul acesta Steam deține deja produsul"))
-            {
-                logger.Debug(
-                    MyOperation.KeyActivation,
-                    OperationStatus.Failure,
-                    "Product already owned by this account",
-                    new LogInfo(MyLogInfoKey.KeyCode, key));
-                    
-                keyHandler.MarkKeyAsAlreadyOwned(key);
-                return;
-            }
-
-            if (errorMessage.Contains("requires ownership of another product") ||
-                errorMessage.Contains("necesită deținerea unui alt produs"))
-            {
-                logger.Debug(
-                    MyOperation.KeyActivation,
-                    OperationStatus.Failure,
-                    "A base product is required in order to activate this key",
-                    new LogInfo(MyLogInfoKey.KeyCode, key));
-                    
-                keyHandler.MarkKeyAsRequiresBaseProduct(key);
-                return;
-            }
-
-            if (errorMessage.Contains("too many recent activation attempts") ||
-                errorMessage.Contains("prea multe încercări de activare recente"))
-            {
-                logger.Debug(
-                    MyOperation.KeyActivation,
-                    OperationStatus.Failure,
-                    "Key activation limit reached",
-                    new LogInfo(MyLogInfoKey.KeyCode, key));
-                return;
-            }
-
-            throw new FormatException($"Unrecognised error message: \"{errorMessage}\"");
+            return request;
         }
     }
 }
