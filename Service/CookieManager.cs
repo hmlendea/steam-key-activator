@@ -57,32 +57,11 @@ namespace SteamKeyActivator.Service
             webProcessor.GoToUrl(HomePageUrl);
             webProcessor.WaitForElementToBeVisible(logoSelector);
 
-            IEnumerable<string> cookiesFileLines = File.ReadAllLines(cookiesFilePath);
-
+            IEnumerable<Cookie> cookies = ReadCookiesFromFile(cookiesFilePath);
             webDriver.Manage().Cookies.DeleteAllCookies();
-
-            foreach (string cookieLine in cookiesFileLines)
+            
+            foreach(Cookie cookie in cookies)
             {
-                if (cookieLine.StartsWith("#"))
-                {
-                    continue;
-                }
-
-                string[] cookieLineFields = cookieLine.Split('\t');
-
-                string cookieDomain = cookieLineFields[0];
-                string cookiePath = cookieLineFields[2];
-                string cookieName = cookieLineFields[5];
-                string cookieValue = HttpUtility.UrlEncode(cookieLineFields[6]);
-                DateTime? cookieExpiry = null;
-
-                if (cookieLineFields[4] != "0")
-                {
-                    cookieExpiry = DateTimeExtensions.FromUnixTime(cookieLineFields[4]);
-                }
-
-                Cookie cookie = new Cookie(cookieName, cookieValue, cookieDomain, cookiePath, cookieExpiry);
-
                 webDriver.Manage().Cookies.AddCookie(cookie);
             }
 
@@ -133,6 +112,38 @@ namespace SteamKeyActivator.Service
             File.WriteAllText(cookiesFilePath, cookiesFileContent);
 
             logger.Debug(MyOperation.CookieSaving, OperationStatus.Success);
+        }
+
+        IEnumerable<Cookie> ReadCookiesFromFile(string cookiesFilePath)
+        {
+            IEnumerable<string> cookiesFileLines = File.ReadAllLines(cookiesFilePath);
+            IList<Cookie> cookies = new List<Cookie>();
+
+            foreach (string cookieLine in cookiesFileLines)
+            {
+                if (cookieLine.StartsWith("#"))
+                {
+                    continue;
+                }
+
+                string[] cookieLineFields = cookieLine.Split('\t');
+
+                string cookieDomain = cookieLineFields[0];
+                string cookiePath = cookieLineFields[2];
+                string cookieName = cookieLineFields[5];
+                string cookieValue = HttpUtility.UrlEncode(cookieLineFields[6]);
+                DateTime? cookieExpiry = null;
+
+                if (cookieLineFields[4] != "0")
+                {
+                    cookieExpiry = DateTimeExtensions.FromUnixTime(cookieLineFields[4]);
+                }
+
+                Cookie cookie = new Cookie(cookieName, cookieValue, cookieDomain, cookiePath, cookieExpiry);
+                cookies.Add(cookie);
+            }
+
+            return cookies;
         }
     }
 }
