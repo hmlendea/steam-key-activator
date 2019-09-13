@@ -45,27 +45,37 @@ namespace SteamKeyActivator.Service
 
         public void ActivateRandomPkmKey()
         {
+            LoadCookies();
+            
+            if (!IsLoggedIn())
+            {
+                LogIn();
+            }
+
             string key = keyHandler.GetRandomKey();
 
-            LoadCookies();
-            LogInIfNeeded();
             ActivateKey(key);
             SaveCookies();
         }
 
-        void LogInIfNeeded()
+        bool IsLoggedIn()
         {
-            webProcessor.GoToUrl(KeyActivationUrl);
-
             By logoSelector = By.Id("logo_holder");
             By avatarSelector = By.XPath("//a[contains(@class,'user_avatar')]");
 
-            webProcessor.WaitForElementToBeVisible(logoSelector);
-
-            if (!webProcessor.IsElementVisible(avatarSelector))
+            if (webProcessor.Tabs.Count == 0 ||
+                !webProcessor.IsElementVisible(logoSelector))
             {
-                LogIn();
+                webProcessor.GoToUrl(KeyActivationUrl);
+                webProcessor.WaitForElementToBeVisible(logoSelector);
             }
+
+            if (webProcessor.IsElementVisible(avatarSelector))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         void LogIn()
@@ -79,13 +89,24 @@ namespace SteamKeyActivator.Service
 
             By usernameInputSelector = By.Id("input_username");
             By passwordInputSelector = By.Id("input_password");
+            By captchaInputSelector = By.Id("input_captcha");
             By rememberLoginChecboxSelector = By.Id("remember_login");
+            By logInButtonSelector = By.XPath(@"//*[@id='login_btn_signin']/button");
             
             By steamGuardCodeInputSelector = By.Id("twofactorcode_entry");
             By steamGuardSubmitButtonSelector = By.XPath("//*[@id='login_twofactorauth_buttonset_entercode']/div[1]");
             By steamGuardIncorrectMessageSelector = By.Id("login_twofactorauth_message_incorrectcode");
 
             By avatarSelector = By.XPath("//a[contains(@class,'user_avatar')]");
+
+            if (webProcessor.IsElementVisible(captchaInputSelector))
+            {
+                Exception ex = new AuthenticationException("Captcha input required");
+
+                logger.Error(MyOperation.SteamLogIn, OperationStatus.Failure, ex);
+
+                throw ex;
+            }
 
             webProcessor.SetText(usernameInputSelector, botSettings.SteamUsername);
             webProcessor.SetText(passwordInputSelector, botSettings.SteamPassword);
@@ -95,7 +116,7 @@ namespace SteamKeyActivator.Service
                 webProcessor.UpdateCheckbox(rememberLoginChecboxSelector, true);
             }
             
-            webProcessor.Click(By.XPath(@"//*[@id='login_btn_signin']/button"));
+            webProcessor.Click(logInButtonSelector);
             webProcessor.WaitForAnyElementToBeVisible(steamGuardCodeInputSelector, avatarSelector);
 
             if (webProcessor.IsElementVisible(steamGuardCodeInputSelector))
@@ -108,7 +129,16 @@ namespace SteamKeyActivator.Service
 
             if (webProcessor.IsElementVisible(steamGuardIncorrectMessageSelector))
             {
-                Exception ex = new AuthenticationException("The provided SteamGuard code");
+                Exception ex = new AuthenticationException("The provided SteamGuard code is not valid");
+
+                logger.Error(MyOperation.SteamLogIn, OperationStatus.Failure, ex);
+
+                throw ex;
+            }
+
+            if (!webProcessor.IsElementVisible(avatarSelector))
+            {
+                Exception ex = new AuthenticationException("Authentication failure");
 
                 logger.Error(MyOperation.SteamLogIn, OperationStatus.Failure, ex);
 
