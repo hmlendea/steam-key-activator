@@ -42,6 +42,11 @@ namespace SteamKeyActivator.Service
 
             if (!File.Exists(cookiesFilePath))
             {
+                logger.Warn(
+                    MyOperation.CookieLoading,
+                    OperationStatus.Failure,
+                    "The cookies file is missing");
+                
                 return;
             }
 
