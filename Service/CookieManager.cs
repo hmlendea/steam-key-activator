@@ -90,6 +90,16 @@ namespace SteamKeyActivator.Service
             string cookiesFileContent = string.Empty;       
             ReadOnlyCollection<Cookie> cookies = webDriver.Manage().Cookies.AllCookies;
 
+            if (cookies.Count == 0)
+            {
+                logger.Warn(
+                    MyOperation.CookieSaving,
+                    OperationStatus.Failure,
+                    "There are no cookies to save");
+                
+                return;
+            }
+
             foreach (Cookie cookie in cookies)
             {
                 cookiesFileContent +=
