@@ -22,6 +22,7 @@ namespace SteamKeyActivator.Service
 
         readonly IWebProcessor webProcessor;
         readonly IWebDriver webDriver;
+        readonly ISteamAuthenticator steamAuthenticator;
         readonly IKeyHandler keyHandler;
         readonly BotSettings botSettings;
         readonly CacheSettings cacheSettings;
@@ -30,6 +31,7 @@ namespace SteamKeyActivator.Service
         public KeyActivator(
             IWebProcessor webProcessor,
             IWebDriver webDriver,
+            ISteamAuthenticator steamAuthenticator,
             IKeyHandler keyHandler,
             BotSettings botSettings,
             CacheSettings cacheSettings,
@@ -37,6 +39,7 @@ namespace SteamKeyActivator.Service
         {
             this.webProcessor = webProcessor;
             this.webDriver = webDriver;
+            this.steamAuthenticator = steamAuthenticator;
             this.keyHandler = keyHandler;
             this.botSettings = botSettings;
             this.cacheSettings = cacheSettings;
@@ -47,107 +50,11 @@ namespace SteamKeyActivator.Service
         {
             LoadCookies();
             
-            if (!IsLoggedIn())
-            {
-                LogIn();
-            }
-
+            steamAuthenticator.LogIn();
             string key = keyHandler.GetRandomKey();
 
             ActivateKey(key);
             SaveCookies();
-        }
-
-        bool IsLoggedIn()
-        {
-            By logoSelector = By.Id("logo_holder");
-            By avatarSelector = By.XPath("//a[contains(@class,'user_avatar')]");
-
-            if (webProcessor.Tabs.Count == 0 ||
-                !webProcessor.IsElementVisible(logoSelector))
-            {
-                webProcessor.GoToUrl(KeyActivationUrl);
-                webProcessor.WaitForElementToBeVisible(logoSelector);
-            }
-
-            if (webProcessor.IsElementVisible(avatarSelector))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        void LogIn()
-        {
-            logger.Info(
-                MyOperation.SteamLogIn,
-                OperationStatus.Started,
-                new LogInfo(MyLogInfoKey.Username, botSettings.SteamUsername));
-
-            webProcessor.GoToUrl(LoginUrl);
-
-            By usernameInputSelector = By.Id("input_username");
-            By passwordInputSelector = By.Id("input_password");
-            By captchaInputSelector = By.Id("input_captcha");
-            By rememberLoginChecboxSelector = By.Id("remember_login");
-            By logInButtonSelector = By.XPath(@"//*[@id='login_btn_signin']/button");
-            
-            By steamGuardCodeInputSelector = By.Id("twofactorcode_entry");
-            By steamGuardSubmitButtonSelector = By.XPath("//*[@id='login_twofactorauth_buttonset_entercode']/div[1]");
-            By steamGuardIncorrectMessageSelector = By.Id("login_twofactorauth_message_incorrectcode");
-
-            By avatarSelector = By.XPath("//a[contains(@class,'user_avatar')]");
-
-            if (webProcessor.IsElementVisible(captchaInputSelector))
-            {
-                Exception ex = new AuthenticationException("Captcha input required");
-
-                logger.Error(MyOperation.SteamLogIn, OperationStatus.Failure, ex);
-
-                throw ex;
-            }
-
-            webProcessor.SetText(usernameInputSelector, botSettings.SteamUsername);
-            webProcessor.SetText(passwordInputSelector, botSettings.SteamPassword);
-
-            if (webProcessor.IsElementVisible(rememberLoginChecboxSelector))
-            {
-                webProcessor.UpdateCheckbox(rememberLoginChecboxSelector, true);
-            }
-            
-            webProcessor.Click(logInButtonSelector);
-            webProcessor.WaitForAnyElementToBeVisible(steamGuardCodeInputSelector, avatarSelector);
-
-            if (webProcessor.IsElementVisible(steamGuardCodeInputSelector))
-            {
-                webProcessor.SetText(steamGuardCodeInputSelector, botSettings.SteamGuardCode);
-                webProcessor.Click(steamGuardSubmitButtonSelector);
-            }
-
-            webProcessor.WaitForAnyElementToBeVisible(avatarSelector, steamGuardIncorrectMessageSelector);
-
-            if (webProcessor.IsElementVisible(steamGuardIncorrectMessageSelector))
-            {
-                Exception ex = new AuthenticationException("The provided SteamGuard code is not valid");
-
-                logger.Error(MyOperation.SteamLogIn, OperationStatus.Failure, ex);
-
-                throw ex;
-            }
-
-            if (!webProcessor.IsElementVisible(avatarSelector))
-            {
-                Exception ex = new AuthenticationException("Authentication failure");
-
-                logger.Error(MyOperation.SteamLogIn, OperationStatus.Failure, ex);
-
-                throw ex;
-            }
-
-            logger.Debug(
-                MyOperation.SteamLogIn,
-                OperationStatus.Success);
         }
 
         void ActivateKey(string key)
