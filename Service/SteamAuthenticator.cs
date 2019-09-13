@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
 using System.Security.Authentication;
 
 using NuciLog.Core;
@@ -16,26 +13,19 @@ namespace SteamKeyActivator.Service
 {
     public sealed class SteamAuthenticator : ISteamAuthenticator
     {
-        static string HomePageUrl => "https://store.steampowered.com";
-        public string LoginUrl => $"{HomePageUrl}/login/?redir=&redir_ssl=1";
+        const string LoginUrl = "https://store.steampowered.com/login/?redir=&redir_ssl=1";
 
         readonly IWebProcessor webProcessor;
-        readonly IWebDriver webDriver;
         readonly BotSettings botSettings;
-        readonly CacheSettings cacheSettings;
         readonly ILogger logger;
 
         public SteamAuthenticator(
             IWebProcessor webProcessor,
-            IWebDriver webDriver,
             BotSettings botSettings,
-            CacheSettings cacheSettings,
             ILogger logger)
         {
             this.webProcessor = webProcessor;
-            this.webDriver = webDriver;
             this.botSettings = botSettings;
-            this.cacheSettings = cacheSettings;
             this.logger = logger;
         }
 
