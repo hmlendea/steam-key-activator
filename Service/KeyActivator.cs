@@ -156,6 +156,17 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
+            if (errorMessage.Contains("An unexpected error has occurred") ||
+                errorMessage.Contains("A apărut o eroare neașteptată"))
+            {
+                logger.Debug(
+                    MyOperation.KeyActivation,
+                    OperationStatus.Failure,
+                    "An unexpected error has occurred",
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
+                return;
+            }
+
             throw new FormatException($"Unrecognised error message: \"{errorMessage}\"");
         }
     }
