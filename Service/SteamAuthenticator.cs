@@ -111,8 +111,26 @@ namespace SteamKeyActivator.Service
             SaveLastUsedSgCode();
         }
 
+        void ValidateCredentials()
+        {
+            if (string.IsNullOrWhiteSpace(botSettings.SteamUsername))
+            {
+                ThrowLogInException("Account username not set");
+            }
+
+            if (string.IsNullOrWhiteSpace(botSettings.SteamPassword))
+            {
+                ThrowLogInException("Account password not set");
+            }
+        }
+
         void ValidateSteamGuardCode()
         {
+            if (string.IsNullOrWhiteSpace(botSettings.SteamGuardCode))
+            {
+                ThrowLogInException("SteamGuard code not set");
+            }
+
             string lastUsedCode = File
                 .ReadAllText(cacheSettings.LastSteamGuardCodeFilePath)
                 .ToUpperInvariant()
