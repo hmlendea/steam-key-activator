@@ -25,6 +25,7 @@ namespace SteamKeyActivator
     {
         static BotSettings botSettings;
         static CacheSettings cacheSettings;
+        static HttpSettings httpSettings;
         static DebugSettings debugSettings;
         static ProductKeyManagerSettings productKeyManagerSettings;
 
@@ -85,6 +86,7 @@ namespace SteamKeyActivator
         {
             botSettings = new BotSettings();
             cacheSettings = new CacheSettings();
+            httpSettings = new HttpSettings();
             debugSettings = new DebugSettings();
             productKeyManagerSettings = new ProductKeyManagerSettings();
             
@@ -94,6 +96,7 @@ namespace SteamKeyActivator
 
             config.Bind(nameof(BotSettings), botSettings);
             config.Bind(nameof(CacheSettings), cacheSettings);
+            config.Bind(nameof(HttpSettings), httpSettings);
             config.Bind(nameof(DebugSettings), debugSettings);
             config.Bind(nameof(ProductKeyManagerSettings), productKeyManagerSettings);
 
