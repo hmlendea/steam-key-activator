@@ -1,9 +1,11 @@
+using System.Net;
+
 namespace SteamKeyActivator.Service
 {
     public interface ICookieManager
     {
-        void LoadCookies();
+        CookieCollection LoadCookies();
 
-        void SaveCookies();
+        void SaveCookies(CookieCollection cookies);
     }
 }

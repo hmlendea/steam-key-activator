@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Net;
 using System.IO;
+using System.Web;
 
+using NuciExtensions;
 using NuciLog.Core;
-using NuciWeb;
-
-using OpenQA.Selenium;
 
 using SteamKeyActivator.Configuration;
 using SteamKeyActivator.Logging;
@@ -17,27 +16,22 @@ namespace SteamKeyActivator.Service
     {
         const string HomePageUrl = "https://store.steampowered.com";
 
-        readonly IWebProcessor webProcessor;
-        readonly IWebDriver webDriver;
         readonly CacheSettings cacheSettings;
         readonly ILogger logger;
 
         public CookieManager(
-            IWebProcessor webProcessor,
-            IWebDriver webDriver,
             CacheSettings cacheSettings,
             ILogger logger)
         {
-            this.webProcessor = webProcessor;
-            this.webDriver = webDriver;
             this.cacheSettings = cacheSettings;
             this.logger = logger;
         }
 
-        public void LoadCookies()
+        public CookieCollection LoadCookies()
         {
             logger.Info(MyOperation.CookieLoading, OperationStatus.Started);
 
+            CookieCollection cookies = new CookieCollection();
             string cookiesFilePath = Path.Combine(cacheSettings.CookiesFilePath);
 
             if (!File.Exists(cookiesFilePath))
@@ -47,48 +41,47 @@ namespace SteamKeyActivator.Service
                     OperationStatus.Failure,
                     "The cookies file is missing");
                 
-                return;
+                return cookies;
             }
-
-            By logoSelector = By.Id("logo_holder");
-
-            webProcessor.GoToUrl(HomePageUrl);
-            webProcessor.WaitForElementToBeVisible(logoSelector);
 
             IEnumerable<string> cookiesFileLines = File.ReadAllLines(cookiesFilePath);
 
-            webDriver.Manage().Cookies.DeleteAllCookies();
-
             foreach (string cookieLine in cookiesFileLines)
             {
-                string[] cookieLineFields = cookieLine.Split('Î');
-                DateTime? expiry = null;
-
-                if (!string.IsNullOrWhiteSpace(cookieLineFields[4]))
+                if (cookieLine.StartsWith('#'))
                 {
-                    expiry = DateTime.Parse(cookieLineFields[4]);
+                    continue;
                 }
 
-                Cookie cookie = new Cookie(
-                    cookieLineFields[0],
-                    cookieLineFields[1],
-                    cookieLineFields[2],
-                    cookieLineFields[3],
-                    expiry);
+                string[] cookieLineFields = cookieLine.Split('\t');
 
-                webDriver.Manage().Cookies.AddCookie(cookie);
+                Cookie cookie = new Cookie();
+                cookie.Domain = cookieLineFields[0];
+                cookie.HttpOnly = bool.Parse(cookieLineFields[1].ToLower());
+                cookie.Path = cookieLineFields[2];
+                cookie.Secure = bool.Parse(cookieLineFields[3].ToLower());
+                cookie.Name = cookieLineFields[5];
+                cookie.Value = HttpUtility.UrlEncode(cookieLineFields[6]);
+
+                if (cookieLineFields[4] != "0")
+                {
+                    cookie.Expires = DateTimeExtensions.FromUnixTime(cookieLineFields[4]);
+                }
+
+                cookies.Add(cookie);
             }
 
             logger.Debug(MyOperation.CookieLoading, OperationStatus.Success);
+
+            return cookies;
         }
 
-        public void SaveCookies()
+        public void SaveCookies(CookieCollection cookies)
         {
             logger.Info(MyOperation.CookieSaving, OperationStatus.Started);
 
             string cookiesFilePath = Path.Combine(cacheSettings.CookiesFilePath); 
             string cookiesFileContent = string.Empty;       
-            ReadOnlyCollection<Cookie> cookies = webDriver.Manage().Cookies.AllCookies;
 
             if (cookies.Count == 0)
             {
@@ -102,12 +95,24 @@ namespace SteamKeyActivator.Service
 
             foreach (Cookie cookie in cookies)
             {
+                string expiryTime = "0";
+
+                if (cookie.Expires >= DateTime.Now)
+                {
+                    expiryTime = DateTimeExtensions
+                        .GetElapsedUnixTime(cookie.Expires)
+                        .TotalSeconds
+                        .ToString();
+                }
+
                 cookiesFileContent +=
-                    cookie.Name + "Î" +
-                    cookie.Value + "Î" +
-                    cookie.Domain + "Î" +
-                    cookie.Path + "Î" +
-                    cookie.Expiry.ToString() +
+                    cookie.Domain + '\t' +
+                    cookie.HttpOnly.ToString().ToUpper() + '\t' +
+                    cookie.Path + '\t' +
+                    cookie.Secure.ToString().ToUpper() + '\t' +
+                    expiryTime + '\t' +
+                    cookie.Name + '\t' +
+                    HttpUtility.UrlDecode(cookie.Value) +
                     Environment.NewLine;
             }
 
