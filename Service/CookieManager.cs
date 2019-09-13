@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Web;
 
+using NuciExtensions;
 using NuciLog.Core;
 using NuciWeb;
 
@@ -61,20 +63,25 @@ namespace SteamKeyActivator.Service
 
             foreach (string cookieLine in cookiesFileLines)
             {
-                string[] cookieLineFields = cookieLine.Split('Î');
-                DateTime? expiry = null;
-
-                if (!string.IsNullOrWhiteSpace(cookieLineFields[4]))
+                if (cookieLine.StartsWith("#"))
                 {
-                    expiry = DateTime.Parse(cookieLineFields[4]);
+                    continue;
                 }
 
-                Cookie cookie = new Cookie(
-                    cookieLineFields[0],
-                    cookieLineFields[1],
-                    cookieLineFields[2],
-                    cookieLineFields[3],
-                    expiry);
+                string[] cookieLineFields = cookieLine.Split('\t');
+
+                string cookieDomain = cookieLineFields[0];
+                string cookiePath = cookieLineFields[2];
+                string cookieName = cookieLineFields[5];
+                string cookieValue = HttpUtility.UrlEncode(cookieLineFields[6]);
+                DateTime? cookieExpiry = null;
+
+                if (cookieLineFields[4] != "0")
+                {
+                    cookieExpiry = DateTimeExtensions.FromUnixTime(cookieLineFields[4]);
+                }
+
+                Cookie cookie = new Cookie(cookieName, cookieValue, cookieDomain, cookiePath, cookieExpiry);
 
                 webDriver.Manage().Cookies.AddCookie(cookie);
             }
@@ -102,12 +109,24 @@ namespace SteamKeyActivator.Service
 
             foreach (Cookie cookie in cookies)
             {
+                string expiryTime = "0";
+
+                if (!(cookie.Expiry is null))
+                {
+                    expiryTime = DateTimeExtensions
+                        .GetElapsedUnixTime(cookie.Expiry.Value)
+                        .TotalSeconds
+                        .ToString();
+                }
+
                 cookiesFileContent +=
-                    cookie.Name + "Î" +
-                    cookie.Value + "Î" +
-                    cookie.Domain + "Î" +
-                    cookie.Path + "Î" +
-                    cookie.Expiry.ToString() +
+                    cookie.Domain + '\t' +
+                    cookie.IsHttpOnly.ToString().ToUpper() + '\t' +
+                    cookie.Path + '\t' +
+                    cookie.Secure.ToString().ToUpper() + '\t' +
+                    expiryTime + '\t' +
+                    cookie.Name + '\t' +
+                    HttpUtility.UrlDecode(cookie.Value) +
                     Environment.NewLine;
             }
 
