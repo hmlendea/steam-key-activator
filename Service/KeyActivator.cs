@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Security.Authentication;
 
 using NuciLog.Core;
 using NuciWeb;
@@ -16,45 +12,39 @@ namespace SteamKeyActivator.Service
 {
     public sealed class KeyActivator : IKeyActivator
     {
-        static string HomePageUrl => "https://store.steampowered.com";
-        public string LoginUrl => $"{HomePageUrl}/login/?redir=&redir_ssl=1";
-        public string KeyActivationUrl => $"{HomePageUrl}/account/registerkey";
+        const string KeyActivationUrl = "https://store.steampowered.com/account/registerkey";
 
         readonly IWebProcessor webProcessor;
-        readonly IWebDriver webDriver;
+        readonly ICookieManager cookieManager;
         readonly ISteamAuthenticator steamAuthenticator;
         readonly IKeyHandler keyHandler;
         readonly BotSettings botSettings;
-        readonly CacheSettings cacheSettings;
         readonly ILogger logger;
 
         public KeyActivator(
             IWebProcessor webProcessor,
-            IWebDriver webDriver,
+            ICookieManager cookieManager,
             ISteamAuthenticator steamAuthenticator,
             IKeyHandler keyHandler,
             BotSettings botSettings,
-            CacheSettings cacheSettings,
             ILogger logger)
         {
             this.webProcessor = webProcessor;
-            this.webDriver = webDriver;
+            this.cookieManager = cookieManager;
             this.steamAuthenticator = steamAuthenticator;
             this.keyHandler = keyHandler;
             this.botSettings = botSettings;
-            this.cacheSettings = cacheSettings;
             this.logger = logger;
         }
 
         public void ActivateRandomPkmKey()
         {
-            LoadCookies();
-            
+            cookieManager.LoadCookies();
             steamAuthenticator.LogIn();
             string key = keyHandler.GetRandomKey();
 
             ActivateKey(key);
-            SaveCookies();
+            cookieManager.SaveCookies();
         }
 
         void ActivateKey(string key)
@@ -167,73 +157,6 @@ namespace SteamKeyActivator.Service
             }
 
             throw new FormatException($"Unrecognised error message: \"{errorMessage}\"");
-        }
-
-        void SaveCookies()
-        {
-            logger.Info(MyOperation.CookieSaving, OperationStatus.Started);
-
-            string cookiesFilePath = Path.Combine(cacheSettings.CacheDirectoryPath, "cookies.txt"); 
-            string cookiesFileContent = string.Empty;       
-            ReadOnlyCollection<Cookie> cookies = webDriver.Manage().Cookies.AllCookies;
-
-            foreach (Cookie cookie in cookies)
-            {
-                cookiesFileContent +=
-                    cookie.Name + "Î" +
-                    cookie.Value + "Î" +
-                    cookie.Domain + "Î" +
-                    cookie.Path + "Î" +
-                    cookie.Expiry.ToString() +
-                    Environment.NewLine;
-            }
-
-            File.WriteAllText(cookiesFilePath, cookiesFileContent);
-
-            logger.Debug(MyOperation.CookieSaving, OperationStatus.Success);
-        }
-
-        void LoadCookies()
-        {
-            logger.Info(MyOperation.CookieLoading, OperationStatus.Started);
-
-            string cookiesFilePath = Path.Combine(cacheSettings.CacheDirectoryPath, "cookies.txt");
-
-            if (!File.Exists(cookiesFilePath))
-            {
-                return;
-            }
-
-            By logoSelector = By.Id("logo_holder");
-
-            webProcessor.GoToUrl(HomePageUrl);
-            webProcessor.WaitForElementToBeVisible(logoSelector);
-
-            IEnumerable<string> cookiesFileLines = File.ReadAllLines(cookiesFilePath);
-
-            webDriver.Manage().Cookies.DeleteAllCookies();
-
-            foreach (string cookieLine in cookiesFileLines)
-            {
-                string[] cookieLineFields = cookieLine.Split('Î');
-                DateTime? expiry = null;
-
-                if (!string.IsNullOrWhiteSpace(cookieLineFields[4]))
-                {
-                    expiry = DateTime.Parse(cookieLineFields[4]);
-                }
-
-                Cookie cookie = new Cookie(
-                    cookieLineFields[0],
-                    cookieLineFields[1],
-                    cookieLineFields[2],
-                    cookieLineFields[3],
-                    expiry);
-
-                webDriver.Manage().Cookies.AddCookie(cookie);
-            }
-
-            logger.Debug(MyOperation.CookieLoading, OperationStatus.Success);
         }
     }
 }
