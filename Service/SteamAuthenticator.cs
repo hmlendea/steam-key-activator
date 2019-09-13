@@ -145,14 +145,17 @@ namespace SteamKeyActivator.Service
                 ThrowLogInException("SteamGuard code not set");
             }
 
-            string lastUsedCode = File
-                .ReadAllText(cacheSettings.LastSteamGuardCodeFilePath)
-                .ToUpperInvariant()
-                .Trim();
-
-            if (lastUsedCode.Equals(botSettings.SteamGuardCode, StringComparison.InvariantCultureIgnoreCase))
+            if (File.Exists(cacheSettings.LastSteamGuardCodeFilePath))
             {
-                ThrowLogInException("The configured SteamGuard code is outdated");
+                string lastUsedCode = File
+                    .ReadAllText(cacheSettings.LastSteamGuardCodeFilePath)
+                    .ToUpperInvariant()
+                    .Trim();
+
+                if (lastUsedCode.Equals(botSettings.SteamGuardCode, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    ThrowLogInException("The configured SteamGuard code is outdated");
+                }
             }
         }
 
