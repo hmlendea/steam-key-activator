@@ -82,6 +82,8 @@ namespace SteamKeyActivator.Service
             }
             
             webProcessor.Click(logInButtonSelector);
+            
+            InputSteamGuardCodeIfRequired();
         }
 
         void InputSteamGuardCodeIfRequired()
