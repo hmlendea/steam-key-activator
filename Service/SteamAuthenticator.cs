@@ -46,6 +46,8 @@ namespace SteamKeyActivator.Service
 
             if (webProcessor.IsElementVisible(avatarSelector))
             {
+                ValidateCurrentSession();
+
                 logger.Info(
                     MyOperation.SteamLogIn,
                     OperationStatus.Success,
@@ -109,6 +111,18 @@ namespace SteamKeyActivator.Service
             webProcessor.Click(steamGuardSubmitButtonSelector);
 
             SaveLastUsedSgCode();
+        }
+
+        void ValidateCurrentSession()
+        {
+            By accountPulldownSelector = By.Id("account_pulldown");
+
+            string currentUsername = webProcessor.GetText(accountPulldownSelector).Trim();
+
+            if (!botSettings.SteamUsername.Equals(currentUsername, StringComparison.InvariantCultureIgnoreCase))
+            {
+                ThrowLogInException("Already logged in as a different user");
+            }
         }
 
         void ValidateCredentials()
