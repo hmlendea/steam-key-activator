@@ -38,7 +38,7 @@ namespace SteamKeyActivator.Service
         {
             logger.Info(MyOperation.CookieLoading, OperationStatus.Started);
 
-            string cookiesFilePath = Path.Combine(cacheSettings.CacheDirectoryPath, "cookies.txt");
+            string cookiesFilePath = Path.Combine(cacheSettings.CookiesFilePath);
 
             if (!File.Exists(cookiesFilePath))
             {
@@ -86,7 +86,7 @@ namespace SteamKeyActivator.Service
         {
             logger.Info(MyOperation.CookieSaving, OperationStatus.Started);
 
-            string cookiesFilePath = Path.Combine(cacheSettings.CacheDirectoryPath, "cookies.txt"); 
+            string cookiesFilePath = Path.Combine(cacheSettings.CookiesFilePath); 
             string cookiesFileContent = string.Empty;       
             ReadOnlyCollection<Cookie> cookies = webDriver.Manage().Cookies.AllCookies;
 

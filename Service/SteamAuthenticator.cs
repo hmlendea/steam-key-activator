@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Security.Authentication;
 
 using NuciLog.Core;
@@ -17,15 +18,18 @@ namespace SteamKeyActivator.Service
 
         readonly IWebProcessor webProcessor;
         readonly BotSettings botSettings;
+        readonly CacheSettings cacheSettings;
         readonly ILogger logger;
 
         public SteamAuthenticator(
             IWebProcessor webProcessor,
             BotSettings botSettings,
+            CacheSettings cacheSettings,
             ILogger logger)
         {
             this.webProcessor = webProcessor;
             this.botSettings = botSettings;
+            this.cacheSettings = cacheSettings;
             this.logger = logger;
         }
 
@@ -82,7 +86,7 @@ namespace SteamKeyActivator.Service
             }
             
             webProcessor.Click(logInButtonSelector);
-            
+
             InputSteamGuardCodeIfRequired();
         }
 
@@ -94,10 +98,29 @@ namespace SteamKeyActivator.Service
 
             webProcessor.WaitForAnyElementToBeVisible(steamGuardCodeInputSelector, avatarSelector);
 
-            if (webProcessor.IsElementVisible(steamGuardCodeInputSelector))
+            if (webProcessor.IsElementVisible(avatarSelector))
             {
-                webProcessor.SetText(steamGuardCodeInputSelector, botSettings.SteamGuardCode);
-                webProcessor.Click(steamGuardSubmitButtonSelector);
+                return;
+            }
+
+            ValidateSteamGuardCode();
+
+            webProcessor.SetText(steamGuardCodeInputSelector, botSettings.SteamGuardCode);
+            webProcessor.Click(steamGuardSubmitButtonSelector);
+
+            SaveLastUsedSgCode();
+        }
+
+        void ValidateSteamGuardCode()
+        {
+            string lastUsedCode = File
+                .ReadAllText(cacheSettings.LastSteamGuardCodeFilePath)
+                .ToUpperInvariant()
+                .Trim();
+
+            if (lastUsedCode.Equals(botSettings.SteamGuardCode, StringComparison.InvariantCultureIgnoreCase))
+            {
+                ThrowLogInException("The configured SteamGuard code is outdated");
             }
         }
 
@@ -129,6 +152,15 @@ namespace SteamKeyActivator.Service
                 new LogInfo(MyLogInfoKey.Username, botSettings.SteamUsername));
 
             throw ex;
+        }
+
+        void SaveLastUsedSgCode()
+        {
+            string steamGuardCode = botSettings.SteamGuardCode
+                .ToUpperInvariant()
+                .Trim();
+            
+            File.WriteAllText(cacheSettings.LastSteamGuardCodeFilePath, steamGuardCode);
         }
     }
 }
