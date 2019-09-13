@@ -267,7 +267,10 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
+            By logoSelector = By.Id("logo_holder");
+
             webProcessor.GoToUrl(HomePageUrl);
+            webProcessor.WaitForElementToBeVisible(logoSelector);
 
             IEnumerable<string> cookiesFileLines = File.ReadAllLines(cookiesFilePath);
 

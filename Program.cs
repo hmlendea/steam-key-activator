@@ -121,7 +121,7 @@ namespace SteamKeyActivator
         {
             ChromeOptions options = new ChromeOptions();
             options.PageLoadStrategy = PageLoadStrategy.None;
-            options.AddExcludedArgument("--enable-loggin");
+            options.AddExcludedArgument("--enable-logging");
             options.AddArgument("--silent");
             options.AddArgument("--no-sandbox");
 			options.AddArgument("--disable-translate");
@@ -132,7 +132,7 @@ namespace SteamKeyActivator
             {
                 options.AddArgument("--headless");
                 options.AddArgument("--disable-gpu");
-                options.AddArgument("--window-size=1920,1080");
+                options.AddArgument("--window-size=1366,768");
                 options.AddArgument("--start-maximized");
                 options.AddArgument("--blink-settings=imagesEnabled=false");
                 options.AddUserProfilePreference("profile.default_content_setting_values.images", 2);
