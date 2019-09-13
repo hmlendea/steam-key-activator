@@ -127,12 +127,14 @@ namespace SteamKeyActivator.Service
 
         void ValidateCredentials()
         {
-            if (string.IsNullOrWhiteSpace(botSettings.SteamUsername))
+            if (string.IsNullOrWhiteSpace(botSettings.SteamUsername) ||
+                botSettings.SteamUsername == "[[STEAM_USERNAME]]")
             {
                 ThrowLogInException("Account username not set");
             }
 
-            if (string.IsNullOrWhiteSpace(botSettings.SteamPassword))
+            if (string.IsNullOrWhiteSpace(botSettings.SteamPassword) ||
+                botSettings.SteamPassword == "[[STEAM_PASSWORD]]")
             {
                 ThrowLogInException("Account password not set");
             }
@@ -140,7 +142,8 @@ namespace SteamKeyActivator.Service
 
         void ValidateSteamGuardCode()
         {
-            if (string.IsNullOrWhiteSpace(botSettings.SteamGuardCode))
+            if (string.IsNullOrWhiteSpace(botSettings.SteamGuardCode) ||
+                botSettings.SteamGuardCode == "[[STEAMGUARD_CODE]]")
             {
                 ThrowLogInException("SteamGuard code not set");
             }
