@@ -51,6 +51,8 @@ namespace SteamKeyActivator
             catch (AuthenticationException) { }
             catch (AggregateException ex)
             {
+                logger.Fatal(Operation.Unknown, OperationStatus.Failure, ex);
+
                 foreach (Exception innerException in ex.InnerExceptions)
                 {
                     logger.Fatal(Operation.Unknown, OperationStatus.Failure, innerException);

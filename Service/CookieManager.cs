@@ -15,7 +15,7 @@ namespace SteamKeyActivator.Service
 {
     public sealed class CookieManager : ICookieManager
     {
-        static string HomePageUrl => "https://store.steampowered.com";
+        const string HomePageUrl = "https://store.steampowered.com";
 
         readonly IWebProcessor webProcessor;
         readonly IWebDriver webDriver;
