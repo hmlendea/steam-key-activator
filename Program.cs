@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using NuciLog;
+using NuciLog.Configuration;
 using NuciLog.Core;
 using NuciSecurity.HMAC;
 using NuciWeb;
@@ -27,6 +28,7 @@ namespace SteamKeyActivator
         static CacheSettings cacheSettings;
         static DebugSettings debugSettings;
         static ProductKeyManagerSettings productKeyManagerSettings;
+        static NuciLoggerSettings loggerSettings;
 
         static IWebDriver webDriver;
         static ILogger logger;
@@ -87,6 +89,7 @@ namespace SteamKeyActivator
             cacheSettings = new CacheSettings();
             debugSettings = new DebugSettings();
             productKeyManagerSettings = new ProductKeyManagerSettings();
+            loggerSettings = new NuciLoggerSettings();
             
             IConfiguration config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", true, true)
@@ -96,6 +99,7 @@ namespace SteamKeyActivator
             config.Bind(nameof(CacheSettings), cacheSettings);
             config.Bind(nameof(DebugSettings), debugSettings);
             config.Bind(nameof(ProductKeyManagerSettings), productKeyManagerSettings);
+            config.Bind(nameof(NuciLoggerSettings), loggerSettings);
 
             return config;
         }
@@ -107,6 +111,7 @@ namespace SteamKeyActivator
                 .AddSingleton(cacheSettings)
                 .AddSingleton(debugSettings)
                 .AddSingleton(productKeyManagerSettings)
+                .AddSingleton(loggerSettings)
                 .AddSingleton<ILogger, NuciLogger>()
                 .AddSingleton<IHmacEncoder<GetProductKeyRequest>, GetProductKeyRequestEncoder>()
                 .AddSingleton<IHmacEncoder<UpdateProductKeyRequest>, UpdateProductKeyRequestEncoder>()
