@@ -12,6 +12,8 @@ namespace SteamKeyActivator.Service
 
         void MarkKeyAsRequiresBaseProduct(string key);
 
+        void MarkKeyAsRegionLocked(string key);
+
         void MarkKeyAsActivated(string key, string productName);
     }
 }
