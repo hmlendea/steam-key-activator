@@ -12,6 +12,7 @@ namespace SteamKeyActivator.Service
         const string UsedKeyStatus = "Used";
         const string AlreadyOwnedKeyStatus = "AlreadyOwned";
         const string RequiresBasedProductKeyStatus = "RequiresBaseProduct";
+        const string RegionLockedStatus = "RegionLocked";
 
         const string InvalidProductName = "N/A";
         const string UnknownProductName = "Unknown";
@@ -121,6 +122,25 @@ namespace SteamKeyActivator.Service
                 UnknownProductName,
                 RequiresBasedProductKeyStatus,
                 UnknownProductOwner);
+
+            logger.Debug(
+                MyOperation.KeyUpdate,
+                OperationStatus.Success,
+                new LogInfo(MyLogInfoKey.KeyCode, key));
+        }
+
+        public void MarkKeyAsRegionLocked(string key)
+        {
+            logger.Info(
+                MyOperation.KeyUpdate,
+                OperationStatus.Started,
+                new LogInfo(MyLogInfoKey.KeyCode, key),
+                new LogInfo(MyLogInfoKey.KeyStatus, RegionLockedStatus));
+
+            this.productKeyManagerClient.UpdateProductKey(
+                key,
+                UnknownProductName,
+                RegionLockedStatus);
 
             logger.Debug(
                 MyOperation.KeyUpdate,

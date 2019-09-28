@@ -145,6 +145,19 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
+            if (errorMessage.Contains("this product is not available for purchase in this country") ||
+                errorMessage.Contains("acest produs nu este disponibil pentru achiziție în această țară"))
+            {
+                logger.Debug(
+                    MyOperation.KeyActivation,
+                    OperationStatus.Failure,
+                    "The key is locked to a specific region",
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
+
+                keyHandler.MarkKeyAsRegionLocked(key);
+                return;
+            }
+
             if (errorMessage.Contains("too many recent activation attempts") ||
                 errorMessage.Contains("prea multe încercări de activare recente"))
             {
