@@ -14,7 +14,9 @@ namespace SteamKeyActivator.Service
 {
     public sealed class SteamAuthenticator : ISteamAuthenticator
     {
-        const string LoginUrl = "https://store.steampowered.com/login/?redir=&redir_ssl=1";
+        static string BaseUrl => "https://store.steampowered.com";
+        static string LoginUrl => $"{BaseUrl}/login/?redir=&redir_ssl=1";
+        static string AccountUrl => $"{BaseUrl}/account";
 
         readonly IWebProcessor webProcessor;
         readonly BotSettings botSettings;
@@ -115,9 +117,13 @@ namespace SteamKeyActivator.Service
 
         void ValidateCurrentSession()
         {
-            By accountPulldownSelector = By.XPath("//span[contains(@class,'online')]");
+            By accountPulldownSelector = By.Id("account_pulldown");
+            By onlinePersonaSelector = By.XPath("//span[contains(@class,'online')]");
 
-            string currentUsername = webProcessor.GetText(accountPulldownSelector).Trim();
+            webProcessor.Click(accountPulldownSelector);
+            webProcessor.WaitForAnyElementToBeVisible(onlinePersonaSelector);
+
+            string currentUsername = webProcessor.GetText(onlinePersonaSelector).Trim();
 
             if (!botSettings.SteamUsername.Equals(currentUsername, StringComparison.InvariantCultureIgnoreCase))
             {
