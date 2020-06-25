@@ -72,7 +72,16 @@ namespace SteamKeyActivator.Client
         async Task<ErrorResponse> DeserialiseErrorResponse(HttpResponseMessage httpResponse)
         {
             string responseString = await httpResponse.Content.ReadAsStringAsync();
-            ErrorResponse response = JsonConvert.DeserializeObject<ErrorResponse>(responseString);
+            ErrorResponse response = null;
+
+            if (!string.IsNullOrWhiteSpace(responseString))
+            {
+                response = JsonConvert.DeserializeObject<ErrorResponse>(responseString);
+            }
+            else
+            {
+                response = new ErrorResponse($"Request failed with status code {(int)httpResponse.StatusCode} ({httpResponse.StatusCode})");
+            }
 
             return response;
         }
