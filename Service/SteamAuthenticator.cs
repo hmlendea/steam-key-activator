@@ -115,7 +115,7 @@ namespace SteamKeyActivator.Service
 
         void ValidateCurrentSession()
         {
-            By accountPulldownSelector = By.Id("account_pulldown");
+            By accountPulldownSelector = By.XPath("//a[contains(@class,'online')]");
 
             string currentUsername = webProcessor.GetText(accountPulldownSelector).Trim();
 

@@ -39,12 +39,22 @@ namespace SteamKeyActivator.Service
                 MyOperation.KeyRetrieval,
                 OperationStatus.Started);
 
-            string key = productKeyManagerClient.GetProductKey("Unknown").Result;
+            string key = productKeyManagerClient.GetProductKey("Unknown")?.Result;
 
-            logger.Debug(
-                MyOperation.KeyRetrieval,
-                OperationStatus.Success,
-                new LogInfo(MyLogInfoKey.KeyCode, key));
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                logger.Debug(
+                    MyOperation.KeyRetrieval,
+                    OperationStatus.Success,
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
+            }
+            else
+            {
+                logger.Error(
+                    MyOperation.KeyRetrieval,
+                    OperationStatus.Failure);
+            }
+
 
             return key;
         }
