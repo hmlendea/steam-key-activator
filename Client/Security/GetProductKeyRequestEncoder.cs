@@ -10,8 +10,7 @@ namespace SteamKeyActivator.Client.Security
         {
             string stringForSigning =
                 obj.StoreName +
-                obj.ProductName +
-                obj.Status;
+                obj.ProductName;
 
             string hmacToken = ComputeHmacToken(stringForSigning, sharedSecretKey);
 

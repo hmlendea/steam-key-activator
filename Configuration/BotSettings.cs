@@ -8,6 +8,6 @@ namespace SteamKeyActivator.Configuration
 
         public string SteamPassword { get; set; }
 
-        public string SteamGuardCode { get; set; }
+        public string SteamGuardTotpKey { get; set; }
     }
 }

@@ -43,18 +43,17 @@ namespace SteamKeyActivator.Service
 
             if (string.IsNullOrWhiteSpace(key))
             {
+                logger.Error(
+                    MyOperation.KeyRetrieval,
+                    OperationStatus.Failure);
+            }
+            else
+            {
                 logger.Debug(
                     MyOperation.KeyRetrieval,
                     OperationStatus.Success,
                     new LogInfo(MyLogInfoKey.KeyCode, key));
             }
-            else
-            {
-                logger.Error(
-                    MyOperation.KeyRetrieval,
-                    OperationStatus.Failure);
-            }
-
 
             return key;
         }
