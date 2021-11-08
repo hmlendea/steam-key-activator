@@ -115,6 +115,7 @@ namespace SteamKeyActivator
                 .AddSingleton<IWebDriver>(s => webDriver)
                 .AddSingleton<IWebProcessor, WebProcessor>()
                 .AddSingleton<ICookieManager, CookieManager>()
+                .AddSingleton<ISteamGuard, SteamGuard>()
                 .AddSingleton<ISteamAuthenticator, SteamAuthenticator>()
                 .AddSingleton<IKeyHandler, KeyUpdater>()
                 .AddSingleton<IKeyActivator, KeyActivator>()

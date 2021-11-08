@@ -7,7 +7,5 @@ namespace SteamKeyActivator.Configuration
         public string CacheDirectoryPath { get; set; }
 
         public string CookiesFilePath => Path.Combine(CacheDirectoryPath, "cookies.txt");
-
-        public string LastSteamGuardCodeFilePath => Path.Combine(CacheDirectoryPath, "last-steamguard-code.txt");
     }
 }
