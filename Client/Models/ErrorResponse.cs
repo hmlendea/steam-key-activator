@@ -8,6 +8,10 @@ namespace SteamKeyActivator.Client.Models
 
         public string Message { get; }
 
+        public ErrorResponse()
+        {
+        }
+
         public ErrorResponse(string message)
         {
             Message = message;
