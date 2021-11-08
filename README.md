@@ -1,4 +1,4 @@
-[![Donate](https://img.shields.io/badge/-%E2%99%A5%20Donate-%23ff69b4)](https://hmlendea.go.ro/fund.html) [![Build Status](https://travis-ci.com/hmlendea/steam-key-activator.svg?branch=master)](https://travis-ci.com/hmlendea/steam-key-activator) [![Latest GitHub release](https://img.shields.io/github/v/release/hmlendea/steam-key-activator)](https://github.com/hmlendea/steam-key-activator/releases/latest)
+[![Donate](https://img.shields.io/badge/-%E2%99%A5%20Donate-%23ff69b4)](https://hmlendea.go.ro/fund.html) [![Latest GitHub release](https://img.shields.io/github/v/release/hmlendea/steam-key-activator)](https://github.com/hmlendea/steam-key-activator/releases/latest)
 
 ## Running in background as a service
 
