@@ -8,10 +8,14 @@ namespace SteamKeyActivator.Client.Security
     {
         public override string GenerateToken(UpdateProductKeyRequest obj, string sharedSecretKey)
         {
-            string stringForSigning =
-                obj.StoreName +
-                obj.ProductName +
-                obj.Key;
+            string stringForSigning = obj.StoreName;
+
+            if (!(obj.ProductName is null))
+            {
+                stringForSigning += obj.ProductName;
+            }
+
+            stringForSigning += obj.Key;
 
             if (!(obj.Owner is null))
             {

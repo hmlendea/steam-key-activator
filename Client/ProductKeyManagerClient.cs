@@ -118,11 +118,14 @@ namespace SteamKeyActivator.Client
             request.Status = status;
             request.HmacToken = updateRequestEncoder.GenerateToken(request, settings.SharedSecretKey);
 
-            string endpoint =
-                $"{settings.ApiUrl}" +
-                $"?store={request.StoreName}" +
-                $"&product={request.StoreName}" +
-                $"&key={request.Key}";
+            string endpoint = $"{settings.ApiUrl}?store={request.StoreName}";
+            
+            if (!(request.ProductName is null))
+            {
+                endpoint += $"&product={request.ProductName}";
+            }
+
+            endpoint += $"&key={request.Key}";
             
             if (!(request.Owner is null))
             {
