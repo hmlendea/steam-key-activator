@@ -123,9 +123,9 @@ namespace SteamKeyActivator.Client
         }
 
         string BuildRequestUrl(string storeName, string status, string hmacToken)
-            => BuildRequestUrl(storeName, null, null, status, null, hmacToken);
+            => BuildRequestUrl(storeName, productName: null, key: null, owner: null, status, hmacToken);
 
-        string BuildRequestUrl(string storeName, string productName, string key, string status, string owner, string hmacToken)
+        string BuildRequestUrl(string storeName, string productName, string key, string owner, string status, string hmacToken)
         {
             string endpoint = $"{settings.ApiUrl}?store={HttpUtility.UrlEncode(storeName)}";
 
@@ -150,7 +150,7 @@ namespace SteamKeyActivator.Client
             }
 
             endpoint += $"&hmac={HttpUtility.UrlEncode(hmacToken)}";
-            
+
             return endpoint;
         }
     }
