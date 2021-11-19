@@ -8,9 +8,7 @@ namespace SteamKeyActivator.Client.Security
     {
         public override string GenerateToken(GetProductKeyRequest obj, string sharedSecretKey)
         {
-            string stringForSigning =
-                obj.StoreName +
-                obj.ProductName;
+            string stringForSigning = obj.StoreName;
 
             string hmacToken = ComputeHmacToken(stringForSigning, sharedSecretKey);
 
