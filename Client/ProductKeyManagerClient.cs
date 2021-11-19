@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 
 using Newtonsoft.Json;
 
@@ -105,7 +106,7 @@ namespace SteamKeyActivator.Client
                 $"&status={request.Status}" +
                 $"&hmac={request.HmacToken}";
 
-            return endpoint;
+            return BuildRequestUrl(request.StoreName, request.Status, request.HmacToken);
         }
 
         string BuildUpdateRequestUrl(string key, string productName, string status, string owner)
@@ -118,23 +119,31 @@ namespace SteamKeyActivator.Client
             request.Status = status;
             request.HmacToken = updateRequestEncoder.GenerateToken(request, settings.SharedSecretKey);
 
-            string endpoint = $"{settings.ApiUrl}?store={request.StoreName}";
-            
-            if (!(request.ProductName is null))
+            return BuildRequestUrl(request.StoreName, request.ProductName, request.Key, request.Owner, request.Status, request.HmacToken);
+        }
+
+        string BuildRequestUrl(string storeName, string status, string hmacToken)
+            => BuildRequestUrl(storeName, null, null, status, null, hmacToken);
+
+        string BuildRequestUrl(string storeName, string productName, string key, string status, string owner, string hmacToken)
+        {
+            string endpoint = $"{settings.ApiUrl}?store={HttpUtility.UrlEncode(storeName)}";
+
+            if (!string.IsNullOrWhiteSpace(productName))
             {
-                endpoint += $"&product={request.ProductName}";
+                endpoint += $"&product={HttpUtility.UrlEncode(productName)}";
             }
 
-            endpoint += $"&key={request.Key}";
-            
-            if (!(request.Owner is null))
+            endpoint += $"&key={HttpUtility.UrlEncode(key)}";
+
+            if (!string.IsNullOrWhiteSpace(owner))
             {
-                endpoint += $"&owner={request.Owner}";
+                endpoint += $"&owner={HttpUtility.UrlEncode(owner)}";
             }
 
             endpoint +=
-                $"&status={request.Status}" +
-                $"&hmac={request.HmacToken}";
+                $"&status={HttpUtility.UrlEncode(status)}" +
+                $"&hmac={HttpUtility.UrlEncode(hmacToken)}";
 
             return endpoint;
         }
