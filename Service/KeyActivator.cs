@@ -161,22 +161,24 @@ namespace SteamKeyActivator.Service
             if (errorMessage.Contains("too many recent activation attempts") ||
                 errorMessage.Contains("prea multe încercări de activare recente"))
             {
-                logger.Debug(
+                logger.Warn(
                     MyOperation.KeyActivation,
                     OperationStatus.Failure,
                     "Key activation limit reached",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
+
                 return;
             }
 
             if (errorMessage.Contains("An unexpected error has occurred") ||
                 errorMessage.Contains("A apărut o eroare neașteptată"))
             {
-                logger.Debug(
+                logger.Warn(
                     MyOperation.KeyActivation,
                     OperationStatus.Failure,
                     "An unexpected error has occurred",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
+                    
                 return;
             }
 

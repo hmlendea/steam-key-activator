@@ -14,9 +14,7 @@ namespace SteamKeyActivator.Service
         const string RequiresBasedProductKeyStatus = "RequiresBaseProduct";
         const string RegionLockedStatus = "RegionLocked";
 
-        const string InvalidProductName = "N/A";
         const string UnknownProductName = "Unknown";
-        const string InvalidProductOwner = "N/A";
         const string UnknownProductOwner = "Unknown";
 
         readonly IProductKeyManagerClient productKeyManagerClient;
@@ -68,9 +66,9 @@ namespace SteamKeyActivator.Service
 
             this.productKeyManagerClient.UpdateProductKey(
                 key,
-                InvalidProductName,
+                productName: null,
                 InvalidKeyStatus,
-                InvalidProductOwner);
+                owner: null);
 
             logger.Debug(
                 MyOperation.KeyUpdate,
