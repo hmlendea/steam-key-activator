@@ -134,16 +134,23 @@ namespace SteamKeyActivator.Client
                 endpoint += $"&product={HttpUtility.UrlEncode(productName)}";
             }
 
-            endpoint += $"&key={HttpUtility.UrlEncode(key)}";
+            if (!string.IsNullOrWhiteSpace(key))
+            {
+                endpoint += $"&key={HttpUtility.UrlEncode(key)}";
+            }
 
             if (!string.IsNullOrWhiteSpace(owner))
             {
                 endpoint += $"&owner={HttpUtility.UrlEncode(owner)}";
             }
 
-            endpoint +=
-                $"&status={HttpUtility.UrlEncode(status)}" +
-                $"&hmac={HttpUtility.UrlEncode(hmacToken)}";
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                endpoint += $"&status={status}";
+            }
+
+            endpoint += $"&hmac={HttpUtility.UrlEncode(hmacToken)}";
+            
 
             return endpoint;
         }
