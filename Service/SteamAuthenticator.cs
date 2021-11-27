@@ -19,20 +19,17 @@ namespace SteamKeyActivator.Service
 
         readonly IWebProcessor webProcessor;
         readonly BotSettings botSettings;
-        readonly CacheSettings cacheSettings;
         readonly ISteamGuard steamGuard;
         readonly ILogger logger;
 
         public SteamAuthenticator(
             IWebProcessor webProcessor,
             BotSettings botSettings,
-            CacheSettings cacheSettings,
             ISteamGuard steamGuard,
             ILogger logger)
         {
             this.webProcessor = webProcessor;
             this.botSettings = botSettings;
-            this.cacheSettings = cacheSettings;
             this.steamGuard = steamGuard;
             this.logger = logger;
         }
@@ -89,11 +86,6 @@ namespace SteamKeyActivator.Service
             webProcessor.SetText(usernameInputSelector, botSettings.SteamUsername);
             webProcessor.SetText(passwordInputSelector, botSettings.SteamPassword);
 
-            if (webProcessor.IsElementVisible(rememberLoginChecboxSelector))
-            {
-                webProcessor.UpdateCheckbox(rememberLoginChecboxSelector, true);
-            }
-            
             webProcessor.Click(logInButtonSelector);
 
             InputSteamGuardCodeIfRequired();

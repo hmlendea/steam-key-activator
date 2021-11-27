@@ -15,7 +15,6 @@ namespace SteamKeyActivator.Service
         const string KeyActivationUrl = "https://store.steampowered.com/account/registerkey";
 
         readonly IWebProcessor webProcessor;
-        readonly ICookieManager cookieManager;
         readonly ISteamAuthenticator steamAuthenticator;
         readonly IKeyHandler keyHandler;
         readonly BotSettings botSettings;
@@ -23,14 +22,12 @@ namespace SteamKeyActivator.Service
 
         public KeyActivator(
             IWebProcessor webProcessor,
-            ICookieManager cookieManager,
             ISteamAuthenticator steamAuthenticator,
             IKeyHandler keyHandler,
             BotSettings botSettings,
             ILogger logger)
         {
             this.webProcessor = webProcessor;
-            this.cookieManager = cookieManager;
             this.steamAuthenticator = steamAuthenticator;
             this.keyHandler = keyHandler;
             this.botSettings = botSettings;
@@ -39,12 +36,10 @@ namespace SteamKeyActivator.Service
 
         public void ActivateRandomPkmKey()
         {
-            cookieManager.LoadCookies();
             steamAuthenticator.LogIn();
             string key = keyHandler.GetRandomKey();
 
             ActivateKey(key);
-            cookieManager.SaveCookies();
         }
 
         void ActivateKey(string key)
