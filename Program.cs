@@ -25,7 +25,6 @@ namespace SteamKeyActivator
     public sealed class Program
     {
         static BotSettings botSettings;
-        static CacheSettings cacheSettings;
         static DebugSettings debugSettings;
         static ProductKeyManagerSettings productKeyManagerSettings;
         static NuciLoggerSettings loggerSettings;
@@ -38,7 +37,6 @@ namespace SteamKeyActivator
         static void Main(string[] args)
         {
             LoadConfiguration();
-            PrepareCache();
             SetupDriver();
 
             serviceProvider = CreateIOC();
@@ -81,7 +79,6 @@ namespace SteamKeyActivator
         static IConfiguration LoadConfiguration()
         {
             botSettings = new BotSettings();
-            cacheSettings = new CacheSettings();
             debugSettings = new DebugSettings();
             productKeyManagerSettings = new ProductKeyManagerSettings();
             loggerSettings = new NuciLoggerSettings();
@@ -91,7 +88,6 @@ namespace SteamKeyActivator
                 .Build();
 
             config.Bind(nameof(BotSettings), botSettings);
-            config.Bind(nameof(CacheSettings), cacheSettings);
             config.Bind(nameof(DebugSettings), debugSettings);
             config.Bind(nameof(ProductKeyManagerSettings), productKeyManagerSettings);
             config.Bind(nameof(NuciLoggerSettings), loggerSettings);
@@ -103,7 +99,6 @@ namespace SteamKeyActivator
         {
             return new ServiceCollection()
                 .AddSingleton(botSettings)
-                .AddSingleton(cacheSettings)
                 .AddSingleton(debugSettings)
                 .AddSingleton(productKeyManagerSettings)
                 .AddSingleton(loggerSettings)
@@ -114,7 +109,6 @@ namespace SteamKeyActivator
                 .AddSingleton<IProductKeyManagerClient, ProductKeyManagerClient>()
                 .AddSingleton<IWebDriver>(s => webDriver)
                 .AddSingleton<IWebProcessor, WebProcessor>()
-                .AddSingleton<ICookieManager, CookieManager>()
                 .AddSingleton<ISteamGuard, SteamGuard>()
                 .AddSingleton<ISteamAuthenticator, SteamAuthenticator>()
                 .AddSingleton<IKeyHandler, KeyUpdater>()
@@ -162,19 +156,6 @@ namespace SteamKeyActivator
 
             webDriver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(botSettings.PageLoadTimeout);
             webDriver.Manage().Window.Maximize();
-        }
-
-        static void PrepareCache()
-        {
-            if (string.IsNullOrWhiteSpace(cacheSettings.CacheDirectoryPath))
-            {
-                throw new DirectoryNotFoundException("The cache directory path is invalid");
-            }
-
-            if (!Directory.Exists(cacheSettings.CacheDirectoryPath))
-            {
-                Directory.CreateDirectory(cacheSettings.CacheDirectoryPath);
-            }
         }
 
         static void LogInnerExceptions(AggregateException exception)
