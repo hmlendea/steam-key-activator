@@ -1,9 +1,7 @@
 using System;
 
 using NuciLog.Core;
-using NuciWeb;
-
-using OpenQA.Selenium;
+using NuciWeb.Steam;
 
 using SteamKeyActivator.Configuration;
 using SteamKeyActivator.Logging;
@@ -14,21 +12,18 @@ namespace SteamKeyActivator.Service
     {
         const string KeyActivationUrl = "https://store.steampowered.com/account/registerkey";
 
-        readonly IWebProcessor webProcessor;
-        readonly ISteamAuthenticator steamAuthenticator;
+        readonly ISteamProcessor steamProcessor;
         readonly IKeyHandler keyHandler;
         readonly BotSettings botSettings;
         readonly ILogger logger;
 
         public KeyActivator(
-            IWebProcessor webProcessor,
-            ISteamAuthenticator steamAuthenticator,
+            ISteamProcessor steamProcessor,
             IKeyHandler keyHandler,
             BotSettings botSettings,
             ILogger logger)
         {
-            this.webProcessor = webProcessor;
-            this.steamAuthenticator = steamAuthenticator;
+            this.steamProcessor = steamProcessor;
             this.keyHandler = keyHandler;
             this.botSettings = botSettings;
             this.logger = logger;
@@ -36,7 +31,7 @@ namespace SteamKeyActivator.Service
 
         public void ActivateRandomPkmKey()
         {
-            steamAuthenticator.LogIn();
+            steamProcessor.LogIn(botSettings.SteamAccount);
             string key = keyHandler.GetRandomKey();
 
             ActivateKey(key);
@@ -49,47 +44,26 @@ namespace SteamKeyActivator.Service
                 OperationStatus.Started,
                 new LogInfo(MyLogInfoKey.KeyCode, key));
 
-            By keyInputSelector = By.Id("product_key");
-            By keyActivationButtonSelector = By.Id("register_btn");
-            By agreementCheckboxSelector = By.Id("accept_ssa");
-
-            By errorSelector = By.Id("error_display");
-            By receiptSelector = By.Id("receipt_form");
-
-            By productNameSelector = By.ClassName("registerkey_lineitem");
-
-            if (!webProcessor.IsElementVisible(keyInputSelector))
+            try
             {
-                webProcessor.GoToUrl(KeyActivationUrl);
+                string productName = steamProcessor.ActivateKey(key);
+                keyHandler.MarkKeyAsActivated(key, productName);
+
+                logger.Debug(
+                    MyOperation.KeyActivation,
+                    OperationStatus.Success,
+                    new LogInfo(MyLogInfoKey.KeyCode, key));
             }
-
-            webProcessor.SetText(keyInputSelector, key);
-            webProcessor.UpdateCheckbox(agreementCheckboxSelector, true);
-
-            webProcessor.Click(keyActivationButtonSelector);
-
-            webProcessor.WaitForAnyElementToBeVisible(errorSelector, receiptSelector);
-
-            if (webProcessor.IsElementVisible(errorSelector))
+            catch (KeyActivationException ex)
             {
-                string errorMessage = webProcessor.GetText(errorSelector);
-                HandleActivationError(key, errorMessage);
+                HandleActivationError(key, ex);
                 return;
             }
-            
-            string productName = webProcessor.GetText(productNameSelector);
-            keyHandler.MarkKeyAsActivated(key, productName);
-
-            logger.Debug(
-                MyOperation.KeyActivation,
-                OperationStatus.Success,
-                new LogInfo(MyLogInfoKey.KeyCode, key));
         }
 
-        void HandleActivationError(string key, string errorMessage)
+        void HandleActivationError(string key, KeyActivationException ex)
         {
-            if (errorMessage.Contains("is not valid") ||
-                errorMessage.Contains("nu este valid"))
+            if (ex.Code == KeyActivationErrorCode.InvalidProductKey)
             {
                 logger.Debug(
                     MyOperation.KeyActivation,
@@ -101,8 +75,7 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
-            if (errorMessage.Contains("activated by a different Steam account") ||
-                errorMessage.Contains("activat de un cont Steam diferit"))
+            if (ex.Code == KeyActivationErrorCode.AlreadyActivatedDifferentAccount)
             {
                 logger.Debug(
                     MyOperation.KeyActivation,
@@ -114,8 +87,7 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
-            if (errorMessage.Contains("This Steam account already owns the product") ||
-                errorMessage.Contains("Contul acesta Steam deține deja produsul"))
+            if (ex.Code == KeyActivationErrorCode.AlreadyActivatedCurrentAccount)
             {
                 logger.Debug(
                     MyOperation.KeyActivation,
@@ -127,8 +99,7 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
-            if (errorMessage.Contains("requires ownership of another product") ||
-                errorMessage.Contains("necesită deținerea unui alt produs"))
+            if (ex.Code == KeyActivationErrorCode.BaseProductRequired)
             {
                 logger.Debug(
                     MyOperation.KeyActivation,
@@ -140,8 +111,7 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
-            if (errorMessage.Contains("this product is not available for purchase in this country") ||
-                errorMessage.Contains("acest produs nu este disponibil pentru achiziție în această țară"))
+            if (ex.Code == KeyActivationErrorCode.RegionLocked)
             {
                 logger.Debug(
                     MyOperation.KeyActivation,
@@ -153,8 +123,7 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
-            if (errorMessage.Contains("too many recent activation attempts") ||
-                errorMessage.Contains("prea multe încercări de activare recente"))
+            if (ex.Code == KeyActivationErrorCode.TooManyAttempts)
             {
                 logger.Warn(
                     MyOperation.KeyActivation,
@@ -165,8 +134,7 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
-            if (errorMessage.Contains("An unexpected error has occurred") ||
-                errorMessage.Contains("A apărut o eroare neașteptată"))
+            if (ex.Code == KeyActivationErrorCode.Unexpected)
             {
                 logger.Warn(
                     MyOperation.KeyActivation,
@@ -177,7 +145,7 @@ namespace SteamKeyActivator.Service
                 return;
             }
 
-            throw new FormatException($"Unrecognised error message: \"{errorMessage}\"");
+            throw new FormatException($"Unrecognised error: \"{ex.Message}\"");
         }
     }
 }
