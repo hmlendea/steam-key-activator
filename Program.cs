@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Security.Authentication;
 
 using Microsoft.Extensions.Configuration;
@@ -9,6 +8,7 @@ using NuciLog;
 using NuciLog.Configuration;
 using NuciLog.Core;
 using NuciSecurity.HMAC;
+using NuciWeb;
 using NuciWeb.Steam;
 
 using OpenQA.Selenium;
@@ -108,6 +108,7 @@ namespace SteamKeyActivator
                 .AddSingleton<IHmacEncoder<ProductKeyResponse>, ProductKeyResponseEncoder>()
                 .AddSingleton<IProductKeyManagerClient, ProductKeyManagerClient>()
                 .AddSingleton<IWebDriver>(s => webDriver)
+                .AddSingleton<IWebProcessor, WebProcessor>()
                 .AddSingleton<ISteamProcessor, SteamProcessor>()
                 .AddSingleton<IKeyHandler, KeyUpdater>()
                 .AddSingleton<IKeyActivator, KeyActivator>()
