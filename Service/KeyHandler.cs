@@ -167,7 +167,7 @@ namespace SteamKeyActivator.Service
                 key,
                 productName,
                 UsedKeyStatus,
-                botSettings.SteamUsername);
+                botSettings.SteamAccount.Username);
 
             logger.Debug(
                 MyOperation.KeyUpdate,
