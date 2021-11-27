@@ -15,10 +15,7 @@
     <PackageReference Include="NuciLog" Version="1.1.0" />
     <PackageReference Include="NuciLog.Core" Version="2.2.5" />
     <PackageReference Include="NuciSecurity.HMAC" Version="1.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\nuciweb.steam\NuciWeb.Steam.csproj" />
+    <PackageReference Include="NuciWeb.Steam" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
