@@ -12,8 +12,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
-    <PackageReference Include="NuciLog" Version="1.1.0" />
-    <PackageReference Include="NuciLog.Core" Version="2.2.5" />
+    <PackageReference Include="NuciLog" Version="1.1.0.1" />
+    <PackageReference Include="NuciLog.Core" Version="2.3.1" />
     <PackageReference Include="NuciSecurity.HMAC" Version="1.0.0" />
     <PackageReference Include="NuciWeb.Steam" Version="1.0.0" />
   </ItemGroup>
