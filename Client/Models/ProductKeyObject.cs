@@ -17,6 +17,14 @@ namespace SteamKeyActivator.Client.Models
         [JsonPropertyName("key")]
         public string Key { get; set; }
 
+        [HmacOrder(4)]
+        [JsonPropertyName("owner")]
+        public string Owner { get; set; }
+
+        [HmacOrder(5)]
+        [JsonPropertyName("comment")]
+        public string Comment { get; set; }
+
         [HmacOrder(6)]
         [JsonPropertyName("status")]
         public string Status { get; set; }

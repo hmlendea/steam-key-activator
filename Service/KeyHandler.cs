@@ -6,7 +6,10 @@ using SteamKeyActivator.Logging;
 
 namespace SteamKeyActivator.Service
 {
-    public sealed class KeyUpdater : IKeyHandler
+    public sealed class KeyUpdater(
+        IProductKeyManagerClient productKeyManagerClient,
+        BotSettings botSettings,
+        ILogger logger) : IKeyHandler
     {
         const string InvalidKeyStatus = "Invalid";
         const string UsedKeyStatus = "Used";
@@ -16,20 +19,6 @@ namespace SteamKeyActivator.Service
 
         const string UnknownProductName = "Unknown";
         const string UnknownProductOwner = "Unknown";
-
-        readonly IProductKeyManagerClient productKeyManagerClient;
-        readonly BotSettings botSettings;
-        readonly ILogger logger;
-
-        public KeyUpdater(
-            IProductKeyManagerClient productKeyManagerClient,
-            BotSettings botSettings,
-            ILogger logger)
-        {
-            this.productKeyManagerClient = productKeyManagerClient;
-            this.botSettings = botSettings;
-            this.logger = logger;
-        }
 
         public string GetRandomKey()
         {
@@ -64,7 +53,7 @@ namespace SteamKeyActivator.Service
                 new LogInfo(MyLogInfoKey.KeyCode, key),
                 new LogInfo(MyLogInfoKey.KeyStatus, InvalidKeyStatus));
 
-            this.productKeyManagerClient.UpdateProductKey(
+            productKeyManagerClient.UpdateProductKey(
                 key,
                 productName: null,
                 InvalidKeyStatus,
@@ -84,7 +73,7 @@ namespace SteamKeyActivator.Service
                 new LogInfo(MyLogInfoKey.KeyCode, key),
                 new LogInfo(MyLogInfoKey.KeyStatus, UsedKeyStatus));
 
-            this.productKeyManagerClient.UpdateProductKey(
+            productKeyManagerClient.UpdateProductKey(
                 key,
                 UnknownProductName,
                 UsedKeyStatus,
@@ -104,7 +93,7 @@ namespace SteamKeyActivator.Service
                 new LogInfo(MyLogInfoKey.KeyCode, key),
                 new LogInfo(MyLogInfoKey.KeyStatus, AlreadyOwnedKeyStatus));
 
-            this.productKeyManagerClient.UpdateProductKey(
+            productKeyManagerClient.UpdateProductKey(
                 key,
                 UnknownProductName,
                 AlreadyOwnedKeyStatus,
@@ -124,7 +113,7 @@ namespace SteamKeyActivator.Service
                 new LogInfo(MyLogInfoKey.KeyCode, key),
                 new LogInfo(MyLogInfoKey.KeyStatus, RequiresBasedProductKeyStatus));
 
-            this.productKeyManagerClient.UpdateProductKey(
+            productKeyManagerClient.UpdateProductKey(
                 key,
                 UnknownProductName,
                 RequiresBasedProductKeyStatus,
@@ -144,7 +133,7 @@ namespace SteamKeyActivator.Service
                 new LogInfo(MyLogInfoKey.KeyCode, key),
                 new LogInfo(MyLogInfoKey.KeyStatus, RegionLockedStatus));
 
-            this.productKeyManagerClient.UpdateProductKey(
+            productKeyManagerClient.UpdateProductKey(
                 key,
                 UnknownProductName,
                 RegionLockedStatus);
@@ -163,7 +152,7 @@ namespace SteamKeyActivator.Service
                 new LogInfo(MyLogInfoKey.KeyCode, key),
                 new LogInfo(MyLogInfoKey.KeyStatus, UsedKeyStatus));
 
-            this.productKeyManagerClient.UpdateProductKey(
+            productKeyManagerClient.UpdateProductKey(
                 key,
                 productName,
                 UsedKeyStatus,
