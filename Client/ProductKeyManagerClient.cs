@@ -1,10 +1,12 @@
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 
 using Newtonsoft.Json;
+using NuciAPI.Requests;
 using NuciAPI.Responses;
+using NuciExtensions;
 using NuciSecurity.HMAC;
 
 using SteamKeyActivator.Client.Models;
@@ -18,15 +20,11 @@ namespace SteamKeyActivator.Client
 
         public async Task<string> GetProductKey(string status)
         {
-            string endpoint = BuildGetRequestUrl(status);
-
-            HttpResponseMessage httpResponse = await httpClient.GetAsync(endpoint);
-
-            if (!httpResponse.IsSuccessStatusCode)
+            HttpResponseMessage httpResponse = await SendRequest(HttpMethod.Get, new GetProductKeyRequest()
             {
-                ErrorResponse errorResponse = await DeserialiseErrorResponse(httpResponse);
-                throw new HttpRequestException(errorResponse.Message);
-            }
+                StoreName = "Steam",
+                Status = status
+            });
 
             ProductKeyResponse response = await DeserialiseSuccessResponse<ProductKeyResponse>(httpResponse);
             return response.ProductKeys.First().Key;
@@ -36,16 +34,39 @@ namespace SteamKeyActivator.Client
             => await UpdateProductKey(key, productName, status, null);
 
         public async Task UpdateProductKey(string key, string productName, string status, string owner)
-        {
-            string endpoint = BuildUpdateRequestUrl(key, productName, status, owner);
+            => await SendRequest(HttpMethod.Put, new UpdateProductKeyRequest()
+            {
+                StoreName = "Steam",
+                ProductName = productName,
+                Key = key,
+                Owner = owner,
+                Status = status
+            });
 
-            HttpResponseMessage httpResponse = await httpClient.PutAsync(endpoint, null);
+        private async Task<HttpResponseMessage> SendRequest<TRequest>(
+            HttpMethod httpMethod,
+            TRequest request) where TRequest : Request
+        {
+            request.HmacToken = HmacEncoder.GenerateToken(request, settings.SharedSecretKey);
+
+            HttpRequestMessage httpRequest = new(httpMethod, settings.ApiUrl)
+            {
+                Content = new StringContent(
+                    request.ToJson(),
+                    Encoding.UTF8,
+                    "application/json"
+                )
+            };
+
+            HttpResponseMessage httpResponse = await httpClient.SendAsync(httpRequest);
 
             if (!httpResponse.IsSuccessStatusCode)
             {
                 ErrorResponse errorResponse = await DeserialiseErrorResponse(httpResponse);
                 throw new HttpRequestException(errorResponse.Message);
             }
+
+            return httpResponse;
         }
 
         static async Task<ErrorResponse> DeserialiseErrorResponse(HttpResponseMessage httpResponse)
@@ -65,65 +86,6 @@ namespace SteamKeyActivator.Client
             string responseString = await httpResponse.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<TResponse>(responseString);
-        }
-
-        string BuildGetRequestUrl(string status)
-        {
-            GetProductKeyRequest request = new()
-            {
-                StoreName = "Steam",
-                Status = status
-            };
-            request.HmacToken = HmacEncoder.GenerateToken(request, settings.SharedSecretKey);
-
-            return BuildRequestUrl(request.StoreName, request.Status, request.HmacToken);
-        }
-
-        string BuildUpdateRequestUrl(string key, string productName, string status, string owner)
-        {
-            UpdateProductKeyRequest request = new()
-            {
-                StoreName = "Steam",
-                ProductName = productName,
-                Key = key,
-                Owner = owner,
-                Status = status
-            };
-            request.HmacToken = HmacEncoder.GenerateToken(request, settings.SharedSecretKey);
-
-            return BuildRequestUrl(request.StoreName, request.ProductName, request.Key, request.Owner, request.Status, request.HmacToken);
-        }
-
-        string BuildRequestUrl(string storeName, string status, string hmacToken)
-            => BuildRequestUrl(storeName, productName: null, key: null, owner: null, status, hmacToken);
-
-        string BuildRequestUrl(string storeName, string productName, string key, string owner, string status, string hmacToken)
-        {
-            string endpoint = $"{settings.ApiUrl}?store={HttpUtility.UrlEncode(storeName)}";
-
-            if (!string.IsNullOrWhiteSpace(productName))
-            {
-                endpoint += $"&product={productName}";
-            }
-
-            if (!string.IsNullOrWhiteSpace(key))
-            {
-                endpoint += $"&key={key}";
-            }
-
-            if (!string.IsNullOrWhiteSpace(owner))
-            {
-                endpoint += $"&owner={owner}";
-            }
-
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                endpoint += $"&status={status}";
-            }
-
-            endpoint += $"&hmac={HttpUtility.UrlEncode(hmacToken)}";
-
-            return endpoint;
         }
     }
 }
