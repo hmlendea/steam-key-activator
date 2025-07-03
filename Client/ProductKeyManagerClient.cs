@@ -1,10 +1,8 @@
-using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-using Newtonsoft.Json;
 using NuciAPI.Requests;
 using NuciAPI.Responses;
 using NuciExtensions;
@@ -25,7 +23,9 @@ namespace SteamKeyActivator.Client
             HttpResponseMessage httpResponse = await SendRequest(HttpMethod.Get, new GetProductKeyRequest()
             {
                 StoreName = "Steam",
-                Status = status
+                ProductName = "^.*$",
+                Status = status,
+                Count = 1
             });
 
             ProductKeyResponse response = await DeserialiseSuccessResponse<ProductKeyResponse>(httpResponse);
@@ -69,14 +69,6 @@ namespace SteamKeyActivator.Client
                 throw new HttpRequestException(errorResponse.Message);
             }
 
-            Response response = await DeserialiseResponse(httpResponse);
-
-            if (!response.Success)
-            {
-                ErrorResponse errorResponse = await DeserialiseErrorResponse(httpResponse);
-                throw new HttpRequestException(errorResponse.Message);
-            }
-
             return httpResponse;
         }
 
@@ -89,26 +81,14 @@ namespace SteamKeyActivator.Client
                 return new ErrorResponse($"Request failed with status code {(int)httpResponse.StatusCode} ({httpResponse.StatusCode})");
             }
 
-            return JsonConvert.DeserializeObject<ErrorResponse>(responseString);
-        }
-
-        static async Task<Response> DeserialiseResponse(HttpResponseMessage httpResponse)
-        {
-            string responseString = await httpResponse.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(responseString))
-            {
-                return new ErrorResponse($"Request failed with status code {(int)httpResponse.StatusCode} ({httpResponse.StatusCode})");
-            }
-
-            return responseString.FromJson<Response>();
+            return responseString.FromJson<ErrorResponse>();
         }
 
         static async Task<TResponse> DeserialiseSuccessResponse<TResponse>(HttpResponseMessage httpResponse)
         {
             string responseString = await httpResponse.Content.ReadAsStringAsync();
 
-            return JsonConvert.DeserializeObject<TResponse>(responseString);
+            return responseString.FromJson<TResponse>();
         }
     }
 }
