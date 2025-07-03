@@ -14,14 +14,41 @@ namespace SteamKeyActivator.Service
         BotSettings botSettings,
         ILogger logger) : IKeyActivator
     {
-        const string KeyActivationUrl = "https://store.steampowered.com/account/registerkey";
-
         public void ActivateRandomPkmKey()
         {
-            steamProcessor.LogIn(botSettings.SteamAccount);
             string key = keyHandler.GetRandomKey();
 
+            LogIn();
             ActivateKey(key);
+        }
+
+        void LogIn()
+        {
+            logger.Info(
+                MyOperation.SteamLogIn,
+                OperationStatus.Started,
+                new LogInfo(MyLogInfoKey.Username, botSettings.SteamAccount.Username));
+
+            try
+            {
+                steamProcessor.LogIn(botSettings.SteamAccount);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(
+                    MyOperation.SteamLogIn,
+                    OperationStatus.Failure,
+                    "Failed to navigate to the key activation page",
+                    ex,
+                    new LogInfo(MyLogInfoKey.Username, botSettings.SteamAccount.Username));
+
+                throw;
+            }
+
+            logger.Debug(
+                MyOperation.SteamLogIn,
+                OperationStatus.Success,
+                new LogInfo(MyLogInfoKey.Username, botSettings.SteamAccount.Username));
         }
 
         void ActivateKey(string key)
