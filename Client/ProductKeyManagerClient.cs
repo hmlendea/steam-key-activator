@@ -16,21 +16,10 @@ namespace SteamKeyActivator.Client
     {
         readonly HttpClient httpClient;
 
-        readonly IHmacEncoder<GetProductKeyRequest> getRequestEncoder;
-        readonly IHmacEncoder<UpdateProductKeyRequest> updateRequestEncoder;
-        readonly IHmacEncoder<ProductKeyResponse> getResponseEncoder;
-
         readonly ProductKeyManagerSettings settings;
 
-        public ProductKeyManagerClient(
-            IHmacEncoder<GetProductKeyRequest> getRequestEncoder,
-            IHmacEncoder<UpdateProductKeyRequest> updateRequestEncoder,
-            IHmacEncoder<ProductKeyResponse> getResponseEncoder,
-            ProductKeyManagerSettings settings)
+        public ProductKeyManagerClient(ProductKeyManagerSettings settings)
         {
-            this.getRequestEncoder = getRequestEncoder;
-            this.updateRequestEncoder = updateRequestEncoder;
-            this.getResponseEncoder = getResponseEncoder;
             this.settings = settings;
 
             httpClient = new HttpClient();
@@ -98,7 +87,7 @@ namespace SteamKeyActivator.Client
             GetProductKeyRequest request = new GetProductKeyRequest();
             request.StoreName = "Steam";
             request.Status = status;
-            request.HmacToken = getRequestEncoder.GenerateToken(request, settings.SharedSecretKey);
+            request.HmacToken = HmacEncoder.GenerateToken(request, settings.SharedSecretKey);
 
             string endpoint =
                 $"{settings.ApiUrl}" +
@@ -117,7 +106,7 @@ namespace SteamKeyActivator.Client
             request.Key = key;
             request.Owner = owner;
             request.Status = status;
-            request.HmacToken = updateRequestEncoder.GenerateToken(request, settings.SharedSecretKey);
+            request.HmacToken = HmacEncoder.GenerateToken(request, settings.SharedSecretKey);
 
             return BuildRequestUrl(request.StoreName, request.ProductName, request.Key, request.Owner, request.Status, request.HmacToken);
         }

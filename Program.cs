@@ -16,7 +16,6 @@ using OpenQA.Selenium.Chrome;
 
 using SteamKeyActivator.Client;
 using SteamKeyActivator.Client.Models;
-using SteamKeyActivator.Client.Security;
 using SteamKeyActivator.Configuration;
 using SteamKeyActivator.Service;
 
@@ -75,14 +74,14 @@ namespace SteamKeyActivator
 
             webDriver.Quit();
         }
-        
+
         static IConfiguration LoadConfiguration()
         {
             botSettings = new BotSettings();
             debugSettings = new DebugSettings();
             productKeyManagerSettings = new ProductKeyManagerSettings();
             loggerSettings = new NuciLoggerSettings();
-            
+
             IConfiguration config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
@@ -103,9 +102,6 @@ namespace SteamKeyActivator
                 .AddSingleton(productKeyManagerSettings)
                 .AddSingleton(loggerSettings)
                 .AddSingleton<ILogger, NuciLogger>()
-                .AddSingleton<IHmacEncoder<GetProductKeyRequest>, GetProductKeyRequestEncoder>()
-                .AddSingleton<IHmacEncoder<UpdateProductKeyRequest>, UpdateProductKeyRequestEncoder>()
-                .AddSingleton<IHmacEncoder<ProductKeyResponse>, ProductKeyResponseEncoder>()
                 .AddSingleton<IProductKeyManagerClient, ProductKeyManagerClient>()
                 .AddSingleton<IWebDriver>(s => webDriver)
                 .AddSingleton<IWebProcessor, WebProcessor>()
