@@ -26,21 +26,36 @@ namespace SteamKeyActivator.Service
                 MyOperation.KeyRetrieval,
                 OperationStatus.Started);
 
-            string key = productKeyManagerClient.GetProductKey("Unknown")?.Result;
+            string key;
+
+            try
+            {
+                key = productKeyManagerClient.GetProductKey("Unknown").Result;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(
+                    MyOperation.KeyRetrieval,
+                    OperationStatus.Failure,
+                    ex);
+
+                throw;
+            }
 
             if (string.IsNullOrWhiteSpace(key))
             {
                 logger.Error(
                     MyOperation.KeyRetrieval,
-                    OperationStatus.Failure);
+                    OperationStatus.Failure,
+                    "The key is null or empty.");
+
+                return null;
             }
-            else
-            {
-                logger.Debug(
-                    MyOperation.KeyRetrieval,
-                    OperationStatus.Success,
-                    new LogInfo(MyLogInfoKey.KeyCode, key));
-            }
+
+            logger.Debug(
+                MyOperation.KeyRetrieval,
+                OperationStatus.Success,
+                new LogInfo(MyLogInfoKey.KeyCode, key));
 
             return key;
         }
