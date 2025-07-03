@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -14,7 +15,8 @@ using SteamKeyActivator.Configuration;
 
 namespace SteamKeyActivator.Client
 {
-    public sealed class ProductKeyManagerClient(ProductKeyManagerSettings settings) : IProductKeyManagerClient
+    public sealed class ProductKeyManagerClient(
+        ProductKeyManagerSettings settings) : IProductKeyManagerClient
     {
         readonly HttpClient httpClient = new();
 
@@ -27,6 +29,7 @@ namespace SteamKeyActivator.Client
             });
 
             ProductKeyResponse response = await DeserialiseSuccessResponse<ProductKeyResponse>(httpResponse);
+
             return response.ProductKeys.First().Key;
         }
 
@@ -49,7 +52,7 @@ namespace SteamKeyActivator.Client
         {
             request.HmacToken = HmacEncoder.GenerateToken(request, settings.SharedSecretKey);
 
-            HttpRequestMessage httpRequest = new(httpMethod, settings.ApiUrl)
+            HttpRequestMessage httpRequest = new(httpMethod, $"{settings.ApiUrl}/ProductKeys")
             {
                 Content = new StringContent(
                     request.ToJson(),
@@ -61,6 +64,14 @@ namespace SteamKeyActivator.Client
             HttpResponseMessage httpResponse = await httpClient.SendAsync(httpRequest);
 
             if (!httpResponse.IsSuccessStatusCode)
+            {
+                ErrorResponse errorResponse = await DeserialiseErrorResponse(httpResponse);
+                throw new HttpRequestException(errorResponse.Message);
+            }
+
+            Response response = await DeserialiseResponse(httpResponse);
+
+            if (!response.Success)
             {
                 ErrorResponse errorResponse = await DeserialiseErrorResponse(httpResponse);
                 throw new HttpRequestException(errorResponse.Message);
@@ -79,6 +90,18 @@ namespace SteamKeyActivator.Client
             }
 
             return JsonConvert.DeserializeObject<ErrorResponse>(responseString);
+        }
+
+        static async Task<Response> DeserialiseResponse(HttpResponseMessage httpResponse)
+        {
+            string responseString = await httpResponse.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(responseString))
+            {
+                return new ErrorResponse($"Request failed with status code {(int)httpResponse.StatusCode} ({httpResponse.StatusCode})");
+            }
+
+            return responseString.FromJson<Response>();
         }
 
         static async Task<TResponse> DeserialiseSuccessResponse<TResponse>(HttpResponseMessage httpResponse)
