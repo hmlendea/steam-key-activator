@@ -12,18 +12,9 @@ using SteamKeyActivator.Configuration;
 
 namespace SteamKeyActivator.Client
 {
-    public sealed class ProductKeyManagerClient : IProductKeyManagerClient
+    public sealed class ProductKeyManagerClient(ProductKeyManagerSettings settings) : IProductKeyManagerClient
     {
-        readonly HttpClient httpClient;
-
-        readonly ProductKeyManagerSettings settings;
-
-        public ProductKeyManagerClient(ProductKeyManagerSettings settings)
-        {
-            this.settings = settings;
-
-            httpClient = new HttpClient();
-        }
+        readonly HttpClient httpClient = new();
 
         public async Task<string> GetProductKey(string status)
         {
@@ -57,55 +48,47 @@ namespace SteamKeyActivator.Client
             }
         }
 
-        async Task<ErrorResponse> DeserialiseErrorResponse(HttpResponseMessage httpResponse)
+        static async Task<ErrorResponse> DeserialiseErrorResponse(HttpResponseMessage httpResponse)
         {
             string responseString = await httpResponse.Content.ReadAsStringAsync();
-            ErrorResponse response = null;
 
-            if (!string.IsNullOrWhiteSpace(responseString))
+            if (string.IsNullOrWhiteSpace(responseString))
             {
-                response = JsonConvert.DeserializeObject<ErrorResponse>(responseString);
-            }
-            else
-            {
-                response = new ErrorResponse($"Request failed with status code {(int)httpResponse.StatusCode} ({httpResponse.StatusCode})");
+                return new ErrorResponse($"Request failed with status code {(int)httpResponse.StatusCode} ({httpResponse.StatusCode})");
             }
 
-            return response;
+            return JsonConvert.DeserializeObject<ErrorResponse>(responseString);
         }
 
-        async Task<TResponse> DeserialiseSuccessResponse<TResponse>(HttpResponseMessage httpResponse)
+        static async Task<TResponse> DeserialiseSuccessResponse<TResponse>(HttpResponseMessage httpResponse)
         {
             string responseString = await httpResponse.Content.ReadAsStringAsync();
-            TResponse response = JsonConvert.DeserializeObject<TResponse>(responseString);
 
-            return response;
+            return JsonConvert.DeserializeObject<TResponse>(responseString);
         }
 
         string BuildGetRequestUrl(string status)
         {
-            GetProductKeyRequest request = new GetProductKeyRequest();
-            request.StoreName = "Steam";
-            request.Status = status;
+            GetProductKeyRequest request = new()
+            {
+                StoreName = "Steam",
+                Status = status
+            };
             request.HmacToken = HmacEncoder.GenerateToken(request, settings.SharedSecretKey);
-
-            string endpoint =
-                $"{settings.ApiUrl}" +
-                $"?store={request.StoreName}" +
-                $"&status={request.Status}" +
-                $"&hmac={request.HmacToken}";
 
             return BuildRequestUrl(request.StoreName, request.Status, request.HmacToken);
         }
 
         string BuildUpdateRequestUrl(string key, string productName, string status, string owner)
         {
-            UpdateProductKeyRequest request = new UpdateProductKeyRequest();
-            request.StoreName = "Steam";
-            request.ProductName = productName;
-            request.Key = key;
-            request.Owner = owner;
-            request.Status = status;
+            UpdateProductKeyRequest request = new()
+            {
+                StoreName = "Steam",
+                ProductName = productName,
+                Key = key,
+                Owner = owner,
+                Status = status
+            };
             request.HmacToken = HmacEncoder.GenerateToken(request, settings.SharedSecretKey);
 
             return BuildRequestUrl(request.StoreName, request.ProductName, request.Key, request.Owner, request.Status, request.HmacToken);
