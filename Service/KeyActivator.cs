@@ -14,8 +14,6 @@ namespace SteamKeyActivator.Service
         BotSettings botSettings,
         ILogger logger) : IKeyActivator
     {
-        const string KeyActivationUrl = "https://store.steampowered.com/account/registerkey";
-
         public void ActivateRandomPkmKey()
         {
             string key = keyHandler.GetRandomKey();

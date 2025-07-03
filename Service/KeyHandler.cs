@@ -1,3 +1,4 @@
+using System;
 using NuciLog.Core;
 
 using SteamKeyActivator.Client;
