@@ -8,26 +8,13 @@ using SteamKeyActivator.Logging;
 
 namespace SteamKeyActivator.Service
 {
-    public sealed class KeyActivator : IKeyActivator
+    public sealed class KeyActivator(
+        ISteamProcessor steamProcessor,
+        IKeyHandler keyHandler,
+        BotSettings botSettings,
+        ILogger logger) : IKeyActivator
     {
         const string KeyActivationUrl = "https://store.steampowered.com/account/registerkey";
-
-        readonly ISteamProcessor steamProcessor;
-        readonly IKeyHandler keyHandler;
-        readonly BotSettings botSettings;
-        readonly ILogger logger;
-
-        public KeyActivator(
-            ISteamProcessor steamProcessor,
-            IKeyHandler keyHandler,
-            BotSettings botSettings,
-            ILogger logger)
-        {
-            this.steamProcessor = steamProcessor;
-            this.keyHandler = keyHandler;
-            this.botSettings = botSettings;
-            this.logger = logger;
-        }
 
         public void ActivateRandomPkmKey()
         {
@@ -94,7 +81,7 @@ namespace SteamKeyActivator.Service
                     OperationStatus.Failure,
                     "Product already owned by this account",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
-                    
+
                 keyHandler.MarkKeyAsAlreadyOwned(key);
                 return;
             }
@@ -106,7 +93,7 @@ namespace SteamKeyActivator.Service
                     OperationStatus.Failure,
                     "A base product is required in order to activate this key",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
-                    
+
                 keyHandler.MarkKeyAsRequiresBaseProduct(key);
                 return;
             }
@@ -141,7 +128,7 @@ namespace SteamKeyActivator.Service
                     OperationStatus.Failure,
                     "An unexpected error has occurred",
                     new LogInfo(MyLogInfoKey.KeyCode, key));
-                    
+
                 return;
             }
 
