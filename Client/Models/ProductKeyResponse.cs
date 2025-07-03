@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using NuciAPI.Responses;
 
 namespace SteamKeyActivator.Client.Models
 {
