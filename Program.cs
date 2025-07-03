@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NuciLog;
 using NuciLog.Configuration;
 using NuciLog.Core;
-using NuciSecurity.HMAC;
 using NuciWeb;
 using NuciWeb.Steam;
 
@@ -15,7 +14,6 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 
 using SteamKeyActivator.Client;
-using SteamKeyActivator.Client.Models;
 using SteamKeyActivator.Configuration;
 using SteamKeyActivator.Service;
 
@@ -36,7 +34,8 @@ namespace SteamKeyActivator
         static void Main(string[] args)
         {
             LoadConfiguration();
-            SetupDriver();
+
+            webDriver = WebDriverInitialiser.InitialiseAvailableWebDriver(debugSettings.IsDebugMode);
 
             serviceProvider = CreateIOC();
             logger = serviceProvider.GetService<ILogger>();
@@ -58,10 +57,7 @@ namespace SteamKeyActivator
             }
             finally
             {
-                if (!(webDriver is null))
-                {
-                    webDriver.Quit();
-                }
+                webDriver?.Quit();
 
                 logger.Info(Operation.ShutDown, "Application stopped");
             }
@@ -94,78 +90,31 @@ namespace SteamKeyActivator
             return config;
         }
 
-        static IServiceProvider CreateIOC()
-        {
-            return new ServiceCollection()
-                .AddSingleton(botSettings)
-                .AddSingleton(debugSettings)
-                .AddSingleton(productKeyManagerSettings)
-                .AddSingleton(loggerSettings)
-                .AddSingleton<ILogger, NuciLogger>()
-                .AddSingleton<IProductKeyManagerClient, ProductKeyManagerClient>()
-                .AddSingleton<IWebDriver>(s => webDriver)
-                .AddSingleton<IWebProcessor, WebProcessor>()
-                .AddSingleton<ISteamProcessor, SteamProcessor>()
-                .AddSingleton<IKeyHandler, KeyUpdater>()
-                .AddSingleton<IKeyActivator, KeyActivator>()
-                .BuildServiceProvider();
-        }
-
-        static void SetupDriver()
-        {
-            ChromeOptions options = new ChromeOptions();
-            options.PageLoadStrategy = PageLoadStrategy.None;
-            options.AddExcludedArgument("--enable-logging");
-            options.AddArgument("--silent");
-            options.AddArgument("--no-sandbox");
-			options.AddArgument("--disable-translate");
-			options.AddArgument("--disable-infobars");
-			options.AddArgument("--disable-logging");
-
-            if (debugSettings.IsHeadless)
-            {
-                options.AddArgument("--headless");
-                options.AddArgument("--disable-gpu");
-                options.AddArgument("--window-size=1366,768");
-                options.AddArgument("--start-maximized");
-                options.AddArgument("--blink-settings=imagesEnabled=false");
-                options.AddUserProfilePreference("profile.default_content_setting_values.images", 2);
-            }
-
-            ChromeDriverService service = ChromeDriverService.CreateDefaultService();
-            service.SuppressInitialDiagnosticInformation = true;
-            service.HideCommandPromptWindow = true;
-
-            webDriver = new ChromeDriver(service, options, TimeSpan.FromSeconds(botSettings.PageLoadTimeout));
-            IJavaScriptExecutor scriptExecutor = (IJavaScriptExecutor)webDriver;
-            string userAgent = (string)scriptExecutor.ExecuteScript("return navigator.userAgent;");
-
-            if (userAgent.Contains("Headless"))
-            {
-                userAgent = userAgent.Replace("Headless", "");
-                options.AddArgument($"--user-agent={userAgent}");
-
-                webDriver.Quit();
-                webDriver = new ChromeDriver(service, options);
-            }
-
-            webDriver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(botSettings.PageLoadTimeout);
-            webDriver.Manage().Window.Maximize();
-        }
+        static IServiceProvider CreateIOC() => new ServiceCollection()
+            .AddSingleton(botSettings)
+            .AddSingleton(debugSettings)
+            .AddSingleton(productKeyManagerSettings)
+            .AddSingleton(loggerSettings)
+            .AddSingleton<ILogger, NuciLogger>()
+            .AddSingleton<IProductKeyManagerClient, ProductKeyManagerClient>()
+            .AddSingleton(s => webDriver)
+            .AddSingleton<IWebProcessor, WebProcessor>()
+            .AddSingleton<ISteamProcessor, SteamProcessor>()
+            .AddSingleton<IKeyHandler, KeyUpdater>()
+            .AddSingleton<IKeyActivator, KeyActivator>()
+            .BuildServiceProvider();
 
         static void LogInnerExceptions(AggregateException exception)
         {
             foreach (Exception innerException in exception.InnerExceptions)
             {
-                AggregateException innerAggregateException = innerException as AggregateException;
-
-                if (innerAggregateException is null)
+                if (innerException is not AggregateException innerAggregateException)
                 {
                     logger.Fatal(Operation.Unknown, OperationStatus.Failure, innerException);
                 }
                 else
                 {
-                    LogInnerExceptions(innerException as AggregateException);
+                    LogInnerExceptions(innerAggregateException);
                 }
             }
         }
